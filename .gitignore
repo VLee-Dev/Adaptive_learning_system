@@ -1,0 +1,11 @@
+AI_CONTEXT.md
+adaptive_learning_pipeline_spec.md
+.env
+backend/.env
+backend/venv/
+backend/__pycache__/
+backend/**/*.pyc
+frontend/node_modules/
+frontend/dist/
+__pycache__/
+*.pyc

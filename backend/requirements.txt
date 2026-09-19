@@ -1,0 +1,11 @@
+fastapi[standard]
+sqlalchemy
+alembic
+psycopg2-binary
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+pydantic-settings
+anthropic
+pytest
+httpx
