@@ -1,138 +1,117 @@
 # Adaptive Learning System
 
-Hệ thống học tiếng Anh thích ứng, tập trung vào Grammar và có thể mở rộng Listening. Thiết kế đầy đủ nằm trong `adaptive_learning_pipeline_spec.md`; file này ghi lại tiến độ triển khai và mô tả hệ thống hiện có.
+Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do Admin tạo.
 
-## Phần 1 - Tiến độ triển khai
+## Phần 1 - Đã triển khai
 
-### 19/09/2026 - Giai đoạn 1: Database và cấu trúc thư mục
+### 19/09/2026 - Nền tảng database
 
-- Đã tạo skeleton backend theo kiến trúc feature-based; mỗi entity chính có package riêng.
-- Đã tạo skeleton frontend React/Vite theo các page và component trong đặc tả.
-- Đã tạo cấu hình SQLAlchemy dùng chung tại `app/core/database.py`, gồm `Base`, `engine`, `SessionLocal` và dependency `get_db()`.
-- Tạo model cấu trúc feature-based: mỗi entity có package riêng; entity có API độc lập có thêm `schema.py`, `router.py`, `service.py`, `repository.py`.
+- Dùng kiến trúc feature-based: mỗi nhóm nghiệp vụ/entity có package riêng.
+- Dùng SQLAlchemy ORM với PostgreSQL và Alembic migration.
+- Tạo cấu trúc backend/frontend ban đầu.
+- Tạo model database và migration nền tảng.
+- Kết nối PostgreSQL local.
 
-### Các ngày/tuần tiếp theo
+### 22/09/2026 - Cập nhật schema theo business flow
 
-- Giai đoạn 1 - Điền `.env`, kiểm tra kết nối PostgreSQL, tạo migration đầu tiên và chạy `alembic upgrade head`: hoàn thành, revision `7014dd03d37b`
-
-- Giai đoạn 2 - API và business logic:
-- Giai đoạn 3 - Frontend:
-
-### Schema database và quan hệ các bảng
-
-### Cây thư mục backend hiện tại
-
-```text
-backend/
-├── alembic/
-│   ├── versions/                  # migration được Alembic sinh tự động
-│   ├── env.py                     # import app.model_registry và Base.metadata
-│   └── script.py.mako
-├── app/
-│   ├── core/
-│   │   └── database.py            # Base, engine, SessionLocal, get_db
-│   ├── users/                     # User, UserRole
-│   ├── skills/                    # Skill, prerequisite graph
-│   ├── lessons/                   # Lesson
-│   ├── stimuli/                   # Stimulus
-│   ├── questions/                 # Question
-│   ├── attempts/                  # Attempt
-│   ├── learning_events/           # LearningEvent
-│   ├── mastery/                   # StudentSkillMastery, BKT service
-│   ├── skill_test_results/        # SkillTestResult
-│   ├── recommendations/           # Recommendation audit log
-│   ├── model_registry.py          # import toàn bộ model vào một metadata chung
-│   ├── config.py                  # đọc biến môi trường
-│   └── main.py                    # FastAPI entry point
-├── scripts/
-├── tests/
-├── .env                          # local, không commit
-├── .env.example                  # template được commit
-└── requirements.txt
-```
-
-Các package entity có nghiệp vụ/API độc lập được tổ chức theo lớp:
-
-```text
-skills/
-├── model.py
-├── schema.py
-├── router.py
-├── service.py
-└── repository.py
-```
-
-Các bảng nội bộ của pipeline chỉ giữ lớp cần thiết, tránh tạo router hình thức.
-
-Các module orchestration sẽ được triển khai ở Giai đoạn 2 gồm `auth`, `content`, `admin`, `learning`, `tutor` và `remedial`. Chúng điều phối nghiệp vụ và expose API, không thay thế các package model ở trên.
-
-| Bảng | Vai trò | Quan hệ chính |
-|---|---|---|
-| `users` | Tài khoản Student/Admin | Một user có nhiều `attempts`, `learning_events`, `student_skill_mastery`, `skill_test_results`, `recommendations`. |
-| `skills` | Kỹ năng tiếng Anh và tham số BKT | Có nhiều lesson, stimulus, question, attempt và trạng thái mastery; liên kết với chính nó qua `skill_prerequisites`. |
-| `skill_prerequisites` | Quan hệ nhiều-nhiều prerequisite | `skill_id` là skill cần học; `prerequisite_skill_id` là skill phải hoàn thành trước. Hai cột tạo khóa chính kép. |
-| `lessons` | Bài giảng trước khi luyện tập | Nhiều lesson thuộc một skill; `content_type` là image/video/text. |
-| `stimuli` | Ngữ liệu dùng chung cho câu hỏi | Nhiều stimulus thuộc một skill; một stimulus có thể được nhiều question dùng lại. |
-| `questions` | Câu hỏi practice/test | Thuộc một skill, có thể trỏ tới stimulus; phân biệt bằng `purpose`, định dạng bằng `question_format`. Practice có difficulty; test để `NULL`. |
-| `attempts` | Mỗi lần Student trả lời | Liên kết user, question và skill; là nguồn để cập nhật BKT và tạo learning event. |
-| `learning_events` | Nhật ký sự kiện học tập | Liên kết user, attempt và skill; ghi answer, AI explanation hoặc remedial trigger. |
-| `student_skill_mastery` | Trạng thái mastery hiện tại | Liên kết user-skill; unique `(user_id, skill_id)` để mỗi user chỉ có một trạng thái cho mỗi skill. |
-| `skill_test_results` | Kết quả bài test cố định | Liên kết user-skill; unique `(user_id, skill_id)`, dùng để xác định test đã passed. |
-| `recommendations` | Log quyết định gợi ý | Lưu user, skill/question được chọn, difficulty và reason để audit adaptive loop. |
-
-Các quan hệ nghiệp vụ quan trọng:
-
-1. `User -> Attempt -> Question/Skill`: mỗi câu trả lời được lưu lại và dùng làm dữ liệu cập nhật mastery.
-2. `Skill -> Question`: Recommendation Engine chỉ chọn question có `purpose = 'practice'`; test không đi qua engine.
-3. `User + Skill -> StudentSkillMastery`: BKT cập nhật bản ghi duy nhất theo cặp user-skill.
-4. `User + Skill -> SkillTestResult`: skill chỉ hoàn thành khi mastery đạt ngưỡng và test đã passed.
-5. `Skill -> SkillPrerequisites -> Skill`: graph prerequisite quyết định skill nào được mở khóa; kiểm tra chu trình sẽ thực hiện ở tầng service.
-6. `Question -> Stimulus`: các dạng listening/reading/image cần stimulus tương ứng; validate loại stimulus sẽ thực hiện ở tầng ứng dụng.
-7. `Question -> Attempt`: `source_attempt_id` cho phép truy vết câu remedial AI được sinh từ lần trả lời sai gần nhất.
-
-### Cấu hình cần bạn điền trước khi kết nối database
-
-Mở [backend/.env](backend/.env) và điền:
-
-```env
-DATABASE_URL=postgresql+psycopg2://<user>:<password>@localhost:5432/adaptive_learning
-JWT_SECRET_KEY=<chuoi-bi-mat>
-ANTHROPIC_API_KEY=<co-the-de-trong-o-giai-doan-1>
-```
-
-Sau khi điền `.env`, chạy từ thư mục `backend/`:
-
-```powershell
-alembic revision --autogenerate -m "init schema"
-alembic upgrade head
-```
-
-## Phần 2 - Mô tả hệ thống đã có sẵn
-
-### Mục tiêu
-
-Hệ thống tạo vòng lặp học thích ứng:
-
-`Student -> Learning Event -> Student Model (BKT) -> Recommendation Engine -> Next Activity`
-
-CRUD nội dung là nền tảng. Business core là BKT và Recommendation Engine rule-based, giúp chọn skill và độ khó minh bạch. LLM chỉ hỗ trợ giải thích khi sai, sinh câu remedial khi sai lặp lại và gợi ý nội dung cho Admin; LLM không quyết định câu hỏi chính.
-
-### Vai trò
-
-- **Guest:** xem landing page và banner skill/course, không làm bài thử.
-- **Student:** đăng ký/đăng nhập, tự động enroll, học adaptive, làm test, xem mastery và lịch sử.
-- **Admin:** quản lý skill, lesson, stimulus, practice/test question và xem báo cáo.
-
-### Luồng chính dự kiến
-
-1. Student đăng nhập và xem skill tree theo prerequisite.
-2. Skill mới hiển thị lesson trước khi vào practice.
-3. `submit-answer` lưu attempt, cập nhật BKT, trả kết quả và giải thích khi sai.
-4. Recommendation Engine chọn skill, difficulty và practice question tiếp theo.
-5. Khi mastery đạt ngưỡng, Student làm test cố định; passed mới mở skill kế tiếp.
-6. Admin quản lý nội dung qua form React và theo dõi báo cáo tổng hợp.
+- Chuyển schema sang `Course -> Chapter -> Topic`.
+- Thêm enrollment, Topic mastery, practice config và Chapter Final Test.
+- Thêm question pool/slot để random test theo cấu hình Admin.
+- Xóa package legacy và cập nhật tài liệu dự án.
+- Database đạt revision `676fd60e37f4`, gồm 20 bảng.
 
 ### Trạng thái hiện tại
 
-Đã hoàn thành phần database và migration của Giai đoạn 1. PostgreSQL local đã kết nối thành công, 11 bảng đã được tạo và schema đã được kiểm tra trực tiếp. Route API thực thi, seed data, giao diện React và logic BKT/Recommendation Engine chưa được triển khai.
+Đã hoàn thành hạ tầng database và migration. Chưa triển khai seed data, API, Auth, BKT service thực thi, adaptive practice service hoặc giao diện hoạt động.
 
+## Phần 2 - Hướng dẫn sử dụng dự án
+
+### Yêu cầu
+
+- Python 3.12+
+- PostgreSQL 14+
+- Node.js 24+
+
+### Backend
+
+```powershell
+Set-Location backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+Tạo file `backend/.env` từ `backend/.env.example`, điền thông tin PostgreSQL và secret cần thiết. Không commit file `.env`.
+
+Kiểm tra migration:
+
+```powershell
+alembic current
+alembic upgrade head
+```
+
+Chạy backend khi API đã được triển khai:
+
+```powershell
+fastapi dev app/main.py
+```
+
+### Frontend
+
+```powershell
+Set-Location frontend
+npm install
+npm run dev
+```
+
+Frontend hiện mới là skeleton; các màn hình sẽ được nối API ở Giai đoạn 3.
+
+## Phần 3 - Mô tả dự án
+
+### Luồng học tập
+
+```text
+Guest xem Course
+  -> Student đăng ký miễn phí và chọn Course
+  -> Chapter theo thứ tự
+  -> Topic theo thứ tự
+  -> Lesson
+  -> Adaptive Practice bằng BKT
+  -> Hoàn thành mọi Topic trong Chapter
+  -> Chapter Final Test
+  -> Chapter completion log
+  -> Chapter tiếp theo
+```
+
+### Database và quan hệ chính
+
+- `courses` lưu khóa học do Admin tạo. Một Course có nhiều `chapters`.
+- `chapters` lưu chương và `order_index`. Một Chapter có nhiều `topics` và tối đa một `chapter_final_test`.
+- `topics` là mục kiến thức chỉ thuộc Course/Chapter đó. Topic có Lesson, question bank, practice configuration và mastery riêng.
+- `lessons` là nội dung học trước practice, thuộc một Topic và có thứ tự.
+- `course_enrollments` nối Student với Course; unique theo `(user_id, course_id)`.
+- `questions` là ngân hàng câu hỏi của Topic. Practice dùng `purpose=practice` và `level=1/2/3`.
+- `practice_configurations` chứa số câu, level bắt đầu, ngưỡng BKT, retry/review limit cho từng Topic.
+- `topic_mastery` là trạng thái BKT hiện tại của một Student tại một Topic; lịch sử câu trả lời nằm ở `attempts`.
+- `chapter_final_tests` không dùng BKT, chỉ chấm điểm theo ngưỡng Admin đặt.
+- `chapter_test_slots` biểu diễn từng vị trí câu; `chapter_test_pools` chứa các nhóm câu; hai bảng nối quy định mỗi slot lấy câu từ pool nào.
+- `chapter_completions` ghi Student đã qua Chapter Final Test; log này là điều kiện mở Chapter tiếp theo.
+- `course_completions` ghi Student đã hoàn thành toàn khóa.
+- `learning_events` lưu lịch sử như trả lời và yêu cầu xem lại Lesson; `recommendations` lưu lý do chọn câu practice để audit.
+
+### Logic thích ứng
+
+- Practice là phần duy nhất cập nhật BKT.
+- BKT tính riêng theo `(user_id, topic_id)`.
+- Kết quả tốt có thể đưa Student lên level cao hơn; kết quả kém có thể hạ level.
+- Ngưỡng mặc định đã thống nhất: `0.65` là khá vững, `0.85` là nắm vững; Admin có thể cấu hình theo Topic.
+- Khi cần ôn lại, hệ thống ghi log `review_required`; Student có thể làm lại theo giới hạn Admin đặt.
+- Chapter Final Test random câu theo từng slot/pool, không gom toàn bộ câu của Chapter thành một pool chung.
+
+### Phạm vi chưa có
+
+- Seed data.
+- API route và Auth/JWT.
+- BKT/recommendation implementation.
+- Admin CRUD.
+- Frontend learning flow.

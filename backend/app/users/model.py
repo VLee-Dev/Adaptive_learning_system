@@ -9,10 +9,11 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.attempts.model import Attempt
+    from app.completions.model import ChapterCompletion, CourseCompletion
+    from app.enrollments.model import CourseEnrollment
     from app.learning_events.model import LearningEvent
-    from app.mastery.model import StudentSkillMastery
     from app.recommendations.model import Recommendation
-    from app.skill_test_results.model import SkillTestResult
+    from app.mastery.model import TopicMastery
 
 
 class UserRole(str, Enum):
@@ -31,6 +32,8 @@ class User(Base):
 
     attempts: Mapped[list["Attempt"]] = relationship(back_populates="user")
     learning_events: Mapped[list["LearningEvent"]] = relationship(back_populates="user")
-    mastery_records: Mapped[list["StudentSkillMastery"]] = relationship(back_populates="user")
-    test_results: Mapped[list["SkillTestResult"]] = relationship(back_populates="user")
+    topic_mastery_records: Mapped[list["TopicMastery"]] = relationship(back_populates="user")
     recommendations: Mapped[list["Recommendation"]] = relationship(back_populates="user")
+    enrollments: Mapped[list["CourseEnrollment"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    chapter_completions: Mapped[list["ChapterCompletion"]] = relationship(back_populates="user")
+    course_completions: Mapped[list["CourseCompletion"]] = relationship(back_populates="user")
