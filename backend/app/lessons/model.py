@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, Enum as SqlEnum, ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from core.database import Base
 
 if TYPE_CHECKING:
     from app.topics.model import Topic

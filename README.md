@@ -20,9 +20,34 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - Xóa package legacy và cập nhật tài liệu dự án.
 - Database đạt revision `676fd60e37f4`, gồm 20 bảng.
 
+### 24/09/2026 - API nền tảng
+
+- Thêm Auth: đăng ký, đăng nhập JWT và `/auth/me`.
+- Thêm API Guest xem Course published.
+- Thêm API Student enroll Course miễn phí.
+- Bật CORS cho frontend Vite.
+
+### 24/09/2026 - API học tập và BKT
+
+- Triển khai đầy đủ Admin CRUD cho Course/Chapter/Topic/Lesson/Question.
+- Triển khai Chapter Final Test với slot/pool system.
+- Triển khai BKT (Bayesian Knowledge Tracing) service với 4 tham số.
+- Triển khai Practice API: lấy câu hỏi adaptive, submit answer, cập nhật mastery.
+- Triển khai Chapter Test API: start test (random generation), submit, completion tracking.
+- Tạo seed data script với Course/Chapter/Topic mẫu đầy đủ.
+- **Admin account tự động:** Migration tạo admin khi chạy `alembic upgrade head` - `admin@adaptive.com` / `Admin@123`
+
 ### Trạng thái hiện tại
 
-Đã hoàn thành hạ tầng database và migration. Chưa triển khai seed data, API, Auth, BKT service thực thi, adaptive practice service hoặc giao diện hoạt động.
+**Hoàn thành:** Database (20 bảng), Auth/JWT, 45 API endpoints, BKT algorithm, adaptive practice, chapter test với slot/pool system. Backend sẵn sàng cho frontend.
+
+**Tài liệu:**
+- `PROJECT_KNOWLEDGE.md` - Kiến thức kỹ thuật tổng hợp (Git ignored)
+- `IMPLEMENTATION_REPORT.md` - Chi tiết implementation
+- `API_DOCUMENTATION.md` - API reference với curl examples
+- `backend/scripts/README_SEED.md` - Hướng dẫn seed
+
+**Chưa có:** Frontend integration, Admin UI, Recommendation engine (cuối cùng).
 
 ## Phần 2 - Hướng dẫn sử dụng dự án
 
@@ -110,8 +135,7 @@ Guest xem Course
 
 ### Phạm vi chưa có
 
-- Seed data.
-- API route và Auth/JWT.
-- BKT/recommendation implementation.
-- Admin CRUD.
-- Frontend learning flow.
+- Frontend integration với backend API.
+- Admin UI panel.
+- Recommendation engine (để sau cùng).
+- Production infrastructure (Redis cho test sessions, logging, monitoring).

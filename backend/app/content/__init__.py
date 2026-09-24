@@ -1,0 +1,1 @@
+"""Public course content feature."""
