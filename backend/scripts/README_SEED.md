@@ -52,7 +52,7 @@ curl -X POST http://localhost:8000/auth/login \
 ```bash
 curl -X POST http://localhost:8000/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email":"student@test.com","username":"student","password":"pass123","full_name":"Test Student"}'
+  -d '{"email":"student@test.com","password":"pass123","full_name":"Test Student"}'
 ```
 
 2. **Enroll vào course**

@@ -1,12 +1,14 @@
 from sqlalchemy.orm import Session
 
 from app.admin.repository import delete_course, get_course, list_courses, save_course
-from app.admin.schemas import CourseCreate, CourseUpdate
+from app.admin.schemas import CourseCreate, CourseUpdate, PracticeConfigCreate, PracticeConfigUpdate
 from app.courses.model import Course
 from app.chapters.model import Chapter
 from app.topics.model import Topic
 from app.lessons.model import Lesson
 from app.questions.model import Question
+from app.mastery.model import PracticeConfiguration
+from app.mastery.repository import get_practice_config, create_practice_config, update_practice_config
 from app.chapter_tests.model import ChapterFinalTest, ChapterTestPool, ChapterTestSlot
 from app.admin.repository import delete_chapter, delete_topic, get_chapter, get_topic, list_chapters, list_topics, save_chapter, save_topic
 from app.admin.schemas import ChapterCreate, ChapterUpdate, FinalTestCreate, LessonCreate, LessonUpdate, QuestionCreate, QuestionUpdate, TestPoolCreate, TestSlotCreate, TopicCreate, TopicUpdate
@@ -217,3 +219,45 @@ def assign_pool_to_slot(db: Session, slot_id: int, pool_id: int) -> ChapterTestS
     if slot is None or pool is None or slot.test_id != pool.test_id:
         raise ValueError("Slot and pool must belong to the same final test")
     return add_pool_to_slot(db, slot, pool)
+
+
+def get_admin_practice_config(db: Session, topic_id: int) -> PracticeConfiguration:
+    from app.admin.repository import get_topic
+    if get_topic(db, topic_id) is None:
+        raise LookupError("Topic not found")
+    config = get_practice_config(db, topic_id)
+    if config is None:
+        raise LookupError("Practice configuration not found for this topic")
+    return config
+
+
+def create_admin_practice_config(db: Session, topic_id: int, payload: PracticeConfigCreate) -> PracticeConfiguration:
+    from app.admin.repository import get_topic
+    if get_topic(db, topic_id) is None:
+        raise LookupError("Topic not found")
+    if get_practice_config(db, topic_id) is not None:
+        raise ValueError("Topic already has a practice configuration")
+    return create_practice_config(db, PracticeConfiguration(topic_id=topic_id, **payload.model_dump()))
+
+
+def update_admin_practice_config(db: Session, topic_id: int, payload: PracticeConfigUpdate) -> PracticeConfiguration:
+    from app.admin.repository import get_topic
+    if get_topic(db, topic_id) is None:
+        raise LookupError("Topic not found")
+    config = get_practice_config(db, topic_id)
+    if config is None:
+        raise LookupError("Practice configuration not found for this topic")
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(config, field, value)
+    return update_practice_config(db, config)
+
+
+def remove_admin_practice_config(db: Session, topic_id: int) -> None:
+    from app.admin.repository import get_topic
+    if get_topic(db, topic_id) is None:
+        raise LookupError("Topic not found")
+    config = get_practice_config(db, topic_id)
+    if config is None:
+        raise LookupError("Practice configuration not found for this topic")
+    db.delete(config)
+    db.commit()

@@ -20,24 +20,40 @@ def generate_test_questions(db: Session, test: ChapterFinalTest) -> dict[int, Qu
     """
     Generate test questions by randomly selecting from pools for each slot.
 
+    Business rule (spec section 6.4): a pool can be assigned to multiple slots,
+    but within a single test attempt the same question must not appear twice
+    from the same pool if the pool still has unused questions.
+
     Returns:
         Dictionary mapping slot_index -> selected Question
     """
     slot_questions: dict[int, Question] = {}
 
-    for slot in test.slots:
+    # Track questions already selected per pool during this attempt
+    used_question_ids_per_pool: dict[int, set[int]] = {}
+
+    # Sort slots by slot_index for deterministic processing order
+    for slot in sorted(test.slots, key=lambda s: s.slot_index):
         if not slot.pools:
             continue
 
-        # Get all questions from all pools assigned to this slot
+        # Get all questions from all pools assigned to this slot,
+        # excluding questions already used from each pool in this attempt
         available_questions = []
         for pool in slot.pools:
-            available_questions.extend(pool.questions)
+            used_in_pool = used_question_ids_per_pool.setdefault(pool.id, set())
+            for question in pool.questions:
+                if question.id not in used_in_pool:
+                    available_questions.append(question)
 
         if available_questions:
-            # Randomly select one question
             selected_question = random.choice(available_questions)
             slot_questions[slot.slot_index] = selected_question
+
+            # Mark this question as used across all pools it belongs to
+            for pool in slot.pools:
+                if selected_question in pool.questions:
+                    used_question_ids_per_pool.setdefault(pool.id, set()).add(selected_question.id)
 
     return slot_questions
 

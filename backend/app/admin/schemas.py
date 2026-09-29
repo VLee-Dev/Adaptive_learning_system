@@ -87,14 +87,18 @@ class TopicAdminResponse(BaseModel):
 
 
 class LessonCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
     content_type: LessonContentType
-    content_url: str = Field(min_length=1)
+    content: str = Field(min_length=1)
+    content_url: str | None = None
     order_index: int = Field(ge=1)
 
 
 class LessonUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
     content_type: LessonContentType | None = None
-    content_url: str | None = Field(default=None, min_length=1)
+    content: str | None = Field(default=None, min_length=1)
+    content_url: str | None = None
     order_index: int | None = Field(default=None, ge=1)
 
 
@@ -103,8 +107,10 @@ class LessonAdminResponse(BaseModel):
 
     id: int
     topic_id: int
+    name: str
     content_type: LessonContentType
-    content_url: str
+    content: str
+    content_url: str | None
     order_index: int
     created_at: datetime
 
@@ -202,3 +208,46 @@ class TestSlotResponse(BaseModel):
     test_id: int
     slot_index: int
     is_required: bool
+
+
+class PracticeConfigCreate(BaseModel):
+    questions_per_session: int = Field(default=5, ge=1)
+    starting_level: int = Field(default=1, ge=1, le=3)
+    level_1_questions: int = Field(default=0, ge=0)
+    level_2_questions: int = Field(default=5, ge=0)
+    level_3_questions: int = Field(default=0, ge=0)
+    level_up_mastery: float = Field(default=0.65, ge=0, le=1)
+    completion_mastery: float = Field(default=0.85, ge=0, le=1)
+    review_mastery: float = Field(default=0.4, ge=0, le=1)
+    max_attempts: int | None = Field(default=None, ge=1)
+    review_limit: int | None = Field(default=None, ge=1)
+
+
+class PracticeConfigUpdate(BaseModel):
+    questions_per_session: int | None = Field(default=None, ge=1)
+    starting_level: int | None = Field(default=None, ge=1, le=3)
+    level_1_questions: int | None = Field(default=None, ge=0)
+    level_2_questions: int | None = Field(default=None, ge=0)
+    level_3_questions: int | None = Field(default=None, ge=0)
+    level_up_mastery: float | None = Field(default=None, ge=0, le=1)
+    completion_mastery: float | None = Field(default=None, ge=0, le=1)
+    review_mastery: float | None = Field(default=None, ge=0, le=1)
+    max_attempts: int | None = Field(default=None, ge=1)
+    review_limit: int | None = Field(default=None, ge=1)
+
+
+class PracticeConfigResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    topic_id: int
+    questions_per_session: int
+    starting_level: int
+    level_1_questions: int
+    level_2_questions: int
+    level_3_questions: int
+    level_up_mastery: float
+    completion_mastery: float
+    review_mastery: float
+    max_attempts: int | None
+    review_limit: int | None

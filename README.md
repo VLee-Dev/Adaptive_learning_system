@@ -37,9 +37,32 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - Tạo seed data script với Course/Chapter/Topic mẫu đầy đủ.
 - **Admin account tự động:** Migration tạo admin khi chạy `alembic upgrade head` - `admin@adaptive.com` / `Admin@123`
 
+### 29/09/2026 - Schema mở rộng + Frontend skeleton
+
+**Backend:**
+- User model thêm `full_name` + `is_active`; Lesson model thêm `name` + `content` (markdown) — migration `xxxx_add_user_and_lesson_fields`.
+- Thêm Admin CRUD cho PracticeConfiguration (4 endpoint) và 8 read-only endpoints cho frontend (Course/Chapter/Topic/Lesson chi tiết + `PATCH /auth/me`).
+- Fix Chapter Final Test: random câu không trùng trong cùng pool trong 1 attempt.
+- Tạo venv cho backend (`backend/venv/`) + cài đầy đủ `requirements.txt`.
+
+**Frontend skeleton:**
+- Vite 8 + React 19 + TypeScript + Tailwind CSS v3 + Zustand (state) + react-hook-form + zod.
+- Routing 26 trang (auth + student + admin + shared) với `ProtectedRoute` theo role student/admin.
+- `BackButton` dùng `history.back()` ưu tiên, fallback về route khác khi không có history.
+- `Layout` chung: header + nav role-based + logout.
+- Axios client với JWT interceptor + auto-redirect 401 về `/login`.
+- 26 file page placeholder sẵn để bạn paste code từng trang.
+
+**Tài liệu tham khảo kiến thức nền (xem `PROJECT_KNOWLEDGE.md` Section 10):**
+- Vite/React/TypeScript/Tailwind: vai trò từng layer, build pipeline, alias `@/*`.
+- Axios interceptor pattern: gắn JWT, xử lý 401 global.
+- Zustand store: `create` + `persist` middleware (lưu vào localStorage).
+- ProtectedRoute pattern với React Router v7.
+- Tailwind `@layer components` + `@apply`: tạo utility classes tái sử dụng.
+
 ### Trạng thái hiện tại
 
-**Hoàn thành:** Database (20 bảng), Auth/JWT, 45 API endpoints, BKT algorithm, adaptive practice, chapter test với slot/pool system. Backend sẵn sàng cho frontend.
+**Hoàn thành:** Database (20 bảng), Auth/JWT, 49 API endpoints, BKT algorithm, adaptive practice, chapter test với slot/pool system, frontend skeleton với routing cho 26 trang. Backend + frontend sẵn sàng tích hợp UI từng trang.
 
 **Tài liệu:**
 - `PROJECT_KNOWLEDGE.md` - Kiến thức kỹ thuật tổng hợp (Git ignored)
@@ -47,7 +70,7 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - `API_DOCUMENTATION.md` - API reference với curl examples
 - `backend/scripts/README_SEED.md` - Hướng dẫn seed
 
-**Chưa có:** Frontend integration, Admin UI, Recommendation engine (cuối cùng).
+**Chưa có:** UI cho từng trang cụ thể (placeholder - bạn thiết kế rồi paste code), Recommendation engine (cuối cùng).
 
 ## Phần 2 - Hướng dẫn sử dụng dự án
 
@@ -85,11 +108,29 @@ fastapi dev app/main.py
 
 ```powershell
 Set-Location frontend
-npm install
+npm install            # (đã chạy, node_modules có sẵn)
 npm run dev
 ```
 
-Frontend hiện mới là skeleton; các màn hình sẽ được nối API ở Giai đoạn 3.
+Frontend có 26 trang với routing sẵn (Auth + Student + Admin + Shared), mỗi trang hiện là placeholder - bạn thiết kế UI rồi paste code vào đúng file `src/pages/...` tương ứng.
+
+**Cấu trúc thư mục frontend:**
+
+```
+frontend/src/
+  components/      # BackButton, Layout (header + nav)
+  lib/api.ts       # Axios client + JWT interceptor
+  routes/          # ProtectedRoute (theo role)
+  stores/          # Zustand: authStore
+  pages/
+    auth/          # Landing, Login, Register, 404, 403
+    student/       # Dashboard, Course list/detail, Chapter, Topic, Lesson, Practice, Test
+    admin/         # Dashboard, Course CRUD, Chapter, Topic, Lesson/Question editor, Practice config, Final test builder
+    ProfilePage.tsx
+  App.tsx          # Định tuyến tất cả 26 routes
+  main.tsx
+  index.css        # Tailwind base + utility classes (.btn-primary, .card, .input, ...)
+```
 
 ## Phần 3 - Mô tả dự án
 

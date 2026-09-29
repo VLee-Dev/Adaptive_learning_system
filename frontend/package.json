@@ -9,15 +9,24 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
     "@vitejs/plugin-react": "latest",
     "axios": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-hook-form": "latest",
+    "react-hook-form": "^7.89.0",
     "react-router-dom": "latest",
-    "recharts": "latest"
+    "recharts": "latest",
+    "zod": "^4.6.5",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@types/node": "^26.6.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.19",
     "typescript": "latest",
     "vite": "latest"
   }

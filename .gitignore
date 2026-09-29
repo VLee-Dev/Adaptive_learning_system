@@ -8,5 +8,8 @@ backend/__pycache__/
 backend/**/*.pyc
 frontend/node_modules/
 frontend/dist/
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
 __pycache__/
 *.pyc

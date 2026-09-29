@@ -30,6 +30,7 @@ def create_user(db: Session, payload: RegisterRequest) -> User:
     user = User(
         email=payload.email,
         hashed_password=hash_password(payload.password),
+        full_name=payload.full_name,
         role=UserRole.STUDENT,
     )
     db.add(user)
@@ -49,3 +50,13 @@ def create_access_token(user_id: int, role: str) -> str:
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_MINUTES)
     payload = {"sub": str(user_id), "role": role, "exp": expires_at}
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=JWT_ALGORITHM)
+
+
+def update_user_profile(db: Session, user: User, full_name: str | None, password: str | None) -> User:
+    if full_name is not None:
+        user.full_name = full_name
+    if password is not None:
+        user.hashed_password = hash_password(password)
+    db.commit()
+    db.refresh(user)
+    return user
