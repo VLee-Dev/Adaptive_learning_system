@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
+import bcrypt
 from jose import jwt
-from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,17 +9,31 @@ from app.auth.schemas import RegisterRequest
 from app.config import settings
 from app.users.model import User, UserRole
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Note: passlib is incompatible with bcrypt>=4.x due to missing __about__ attr.
+# We use the `bcrypt` package directly for hashing/verifying passwords.
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_MINUTES = 60
 
+# bcrypt has a 72-byte limit; truncate to be safe (per their docs).
+_BCRYPT_MAX_BYTES = 72
+
+
+def _normalize(password: str) -> bytes:
+    """Encode password to bytes and truncate to 72 bytes (bcrypt limit)."""
+    return password.encode("utf-8")[:_BCRYPT_MAX_BYTES]
+
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(_normalize(password), salt)
+    return hashed.decode("utf-8")
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(password, hashed_password)
+    try:
+        return bcrypt.checkpw(_normalize(password), hashed_password.encode("utf-8"))
+    except (ValueError, TypeError):
+        return False
 
 
 def create_user(db: Session, payload: RegisterRequest) -> User:

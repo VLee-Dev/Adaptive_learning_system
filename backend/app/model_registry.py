@@ -10,10 +10,11 @@ from app.questions.model import Question
 from app.recommendations.model import Recommendation
 from app.stimuli.model import Stimulus
 from app.topics.model import Topic
-from app.users.model import User
 from app.chapters.model import Chapter
-from app.attempts.model import Attempt
-from app.learning_events.model import LearningEvent
+# Import User LAST - it has relationships to Attempt/LearningEvent/TopicMastery/
+# Recommendation/Enrollment/ChapterCompletion/CourseCompletion, so all those
+# model classes must be defined before User's mapper is configured.
+from app.users.model import User
 
 __all__ = [
     "Attempt", "Chapter", "ChapterCompletion", "ChapterFinalTest",

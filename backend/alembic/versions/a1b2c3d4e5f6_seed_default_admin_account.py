@@ -1,7 +1,7 @@
 """seed_default_admin_account
 
 Revision ID: a1b2c3d4e5f6
-Revises: 676fd60e37f4
+Revises: e5f6a7b8c9d0
 Create Date: 2026-09-24 16:00:00.000000
 
 """
@@ -11,12 +11,13 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.sql import table, column
 from sqlalchemy import String, Integer, Enum
+from datetime import datetime
 import bcrypt
 
 
 # revision identifiers, used by Alembic.
 revision: str = 'a1b2c3d4e5f6'
-down_revision: Union[str, None] = '676fd60e37f4'
+down_revision: Union[str, None] = 'e5f6a7b8c9d0_add_user_and_lesson_fields'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -36,7 +37,8 @@ def upgrade() -> None:
         column('hashed_password', String),
         column('role', String),
         column('full_name', String),
-        column('is_active', sa.Boolean)
+        column('is_active', sa.Boolean),
+        column('created_at', sa.DateTime),
     )
 
     # Check if admin already exists
@@ -51,15 +53,16 @@ def upgrade() -> None:
             {
                 'email': 'admin@adaptive.com',
                 'hashed_password': hash_password('Admin@123'),
-                'role': 'ADMIN',
+                'role': 'admin',
                 'full_name': 'System Administrator',
-                'is_active': True
+                'is_active': True,
+                'created_at': datetime.utcnow(),
             }
         ])
-        print("✅ Default admin account created: admin@adaptive.com / Admin@123")
-        print("⚠️  CHANGE THIS PASSWORD IN PRODUCTION!")
+        print("Default admin account created: admin@adaptive.com / Admin@123")
+        print("CHANGE THIS PASSWORD IN PRODUCTION!")
     else:
-        print("ℹ️  Admin account already exists, skipping...")
+        print("Admin account already exists, skipping...")
 
 
 def downgrade() -> None:
@@ -67,4 +70,4 @@ def downgrade() -> None:
     op.execute(
         sa.text("DELETE FROM users WHERE email = 'admin@adaptive.com'")
     )
-    print("🗑️  Default admin account removed")
+    print("Default admin account removed")
