@@ -15,6 +15,7 @@
     "react": "latest",
     "react-dom": "latest",
     "react-hook-form": "^7.89.0",
+    "react-hot-toast": "^2.6.1",
     "react-router-dom": "latest",
     "recharts": "latest",
     "zod": "^4.6.5",

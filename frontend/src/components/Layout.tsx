@@ -1,13 +1,12 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 
 interface LayoutProps {
-  children: React.ReactNode
-  /** If true, do not wrap with nav bar (e.g. for auth pages) */
+  /** If true, do not wrap with nav bar (e.g. for auth pages and full-bleed landing) */
   bare?: boolean
 }
 
-export default function Layout({ children, bare = false }: LayoutProps) {
+export default function Layout({ bare = false }: LayoutProps) {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
@@ -18,14 +17,15 @@ export default function Layout({ children, bare = false }: LayoutProps) {
   }
 
   if (bare) {
-    return <main className="min-h-screen">{children}</main>
+    return <main className="min-h-screen"><Outlet /></main>
   }
 
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-        <Link to={user?.role === 'admin' ? '/admin/courses' : '/student/dashboard'} className="text-xl font-bold text-brand-700">
-          Adaptive Learning
+        <Link to={user?.role === 'admin' ? '/admin/courses' : '/student/dashboard'} className="flex items-center gap-2 text-xl font-bold text-brand-700">
+          <img src="/images/icon.png" alt="Adaptive Learning" className="h-8 w-8 object-contain" />
+          <span>Adaptive Learning</span>
         </Link>
         <nav className="flex items-center gap-4">
           {user ? (
@@ -58,7 +58,7 @@ export default function Layout({ children, bare = false }: LayoutProps) {
           )}
         </nav>
       </header>
-      <main className="flex-1 p-6 max-w-7xl mx-auto w-full">{children}</main>
+      <main className="flex-1 p-6 max-w-7xl mx-auto w-full"><Outlet /></main>
     </div>
   )
 }

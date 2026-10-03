@@ -60,9 +60,30 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - ProtectedRoute pattern với React Router v7.
 - Tailwind `@layer components` + `@apply`: tạo utility classes tái sử dụng.
 
+### 03/10/2026 - Landing + Login + Register (3 trang đầu tiên)
+
+**Frontend:**
+- Tải ảnh background Neko về `frontend/public/images/bg-neko.png` (từ URL Google, 215KB).
+- Cài `react-hot-toast` cho thông báo nhẹ kiểu toast/snackbar (không che UI).
+- Mở rộng Tailwind theme: thêm màu `paw` (cam đất), `cream` (kem), font `quicksand`, shadow `cozy`.
+- Thêm Google Fonts Quicksand vào `index.html`.
+- Tạo component `Toaster` (mount 1 lần ở `main.tsx`) + hook `useRequireAuth` (chạy callback nếu đã login, ngược lại toast nhắc + redirect /login sau 1.2s).
+- Layout mới: 2 layout riêng - `bare` cho Landing/Login/Register (full-bleed background, không có header), layout thường cho các trang app.
+
+**3 trang đã xong:**
+- **LandingPage (A1)**: Hero + features + danh sách khóa học public (gọi `GET /courses`). Mỗi course card có nút "Xem chi tiết →" - nếu Guest click thì toast "Bạn cần đăng nhập để tiếp tục" + redirect `/login`. Smooth scroll tới `#courses` khi click "Xem khóa học".
+- **LoginPage (A2)**: Theo mẫu Neko (background mèo + form bên phải). Gọi `useAuthStore.login()`. Có thêm: redirect về trang gốc nếu user bị ProtectedRoute đẩy qua, eye toggle cho password, remember me.
+- **RegisterPage (A3)**: Theo mẫu Neko. Dùng `react-hook-form` + `zod` validation. Fields: họ tên, email, password, xác nhận password, đồng ý điều khoản. Sau khi đăng ký thành công → tự động login → navigate về dashboard.
+
+**Kiến thức mới cần nhớ (xem `PROJECT_KNOWLEDGE.md` Section 10):**
+- `react-hot-toast`: import `toast` từ thư viện, dùng `toast.success/error/loading`. Mount `<Toaster />` ở `main.tsx` để toast hiển thị toàn cục.
+- React Hook Form + Zod: `useForm({ resolver: zodResolver(schema) })` → tự động validate, `register('fieldName')` để bind input, `formState.errors.fieldName` để hiển thị lỗi.
+- Zod `.refine((v) => v === true, { message })` thay cho `z.literal(true, { errorMap })` ở phiên bản mới.
+- 2 Layout pattern: `bare` cho full-bleed (không header) và layout thường cho app - tách ở `App.tsx` bằng 2 `<Layout>` block.
+
 ### Trạng thái hiện tại
 
-**Hoàn thành:** Database (20 bảng), Auth/JWT, 49 API endpoints, BKT algorithm, adaptive practice, chapter test với slot/pool system, frontend skeleton với routing cho 26 trang. Backend + frontend sẵn sàng tích hợp UI từng trang.
+**Hoàn thành:** Database (20 bảng), Auth/JWT, 49 API endpoints, BKT algorithm, adaptive practice, chapter test với slot/pool system, frontend skeleton với routing cho 26 trang, 3 trang đầu tiên (Landing/Login/Register) với kết nối API thật. Backend + frontend sẵn sàng tích hợp UI từng trang.
 
 **Tài liệu:**
 - `PROJECT_KNOWLEDGE.md` - Kiến thức kỹ thuật tổng hợp (Git ignored)
@@ -70,7 +91,7 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - `API_DOCUMENTATION.md` - API reference với curl examples
 - `backend/scripts/README_SEED.md` - Hướng dẫn seed
 
-**Chưa có:** UI cho từng trang cụ thể (placeholder - bạn thiết kế rồi paste code), Recommendation engine (cuối cùng).
+**Chưa có:** UI cho 23 trang còn lại (Student flow + Admin flow + Profile), Recommendation engine (cuối cùng).
 
 ## Phần 2 - Hướng dẫn sử dụng dự án
 

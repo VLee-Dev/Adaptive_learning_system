@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/routes/ProtectedRoute'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import { useAuthStore } from '@/stores/authStore'
 
 // Auth pages
@@ -50,15 +51,19 @@ function App() {
   }, [])
 
   return (
-    <Layout>
-      <Routes>
-        {/* Public auth pages (no Layout header) */}
+    <ErrorBoundary>
+    <Routes>
+      {/* Public marketing/auth pages - no header */}
+      <Route element={<Layout bare />}>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forbidden" element={<ForbiddenPage />} />
+        <Route path="/404" element={<NotFoundPage />} />
+      </Route>
 
-        {/* Landing is also public */}
-        <Route path="/" element={<LandingPage />} />
-
+      {/* App pages - with header */}
+      <Route element={<Layout />}>
         {/* Student routes */}
         <Route
           path="/student/dashboard"
@@ -209,12 +214,11 @@ function App() {
           }
         />
 
-        {/* Errors */}
-        <Route path="/forbidden" element={<ForbiddenPage />} />
-        <Route path="/404" element={<NotFoundPage />} />
+        {/* Catch-all for app pages (404) */}
         <Route path="*" element={<Navigate to="/404" replace />} />
-      </Routes>
-    </Layout>
+      </Route>
+    </Routes>
+    </ErrorBoundary>
   )
 }
 

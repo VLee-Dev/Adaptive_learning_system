@@ -6,7 +6,28 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        quicksand: ['Quicksand', 'sans-serif'],
+        // Keep system fallback
+      },
       colors: {
+        // Neko theme (Login, Register, Landing)
+        paw: {
+          50: '#fff9ed',
+          100: '#fef1d6',
+          200: '#fce2ad',
+          500: '#f97316',
+          600: '#ea580c',
+          700: '#c2410c',
+        },
+        cream: {
+          50: '#FFFDF9',
+          100: '#FAF5EE',
+          200: '#F2E4D2',
+          800: '#543D2B',
+          900: '#382618',
+        },
+        // Future brand theme (Student, Admin)
         brand: {
           50: "#eff6ff",
           100: "#dbeafe",
@@ -19,6 +40,9 @@ export default {
           800: "#1e40af",
           900: "#1e3a8a",
         },
+      },
+      boxShadow: {
+        cozy: '0 20px 45px -10px rgba(110, 68, 25, 0.15), 0 8px 16px -6px rgba(110, 68, 25, 0.08)',
       },
     },
   },
