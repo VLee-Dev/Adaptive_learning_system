@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import Layout from '@/components/Layout'
+import AdminLayout from '@/components/AdminLayout'
 import ProtectedRoute from '@/routes/ProtectedRoute'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { useAuthStore } from '@/stores/authStore'
@@ -130,79 +131,18 @@ function App() {
           }
         />
 
-        {/* Admin routes */}
-        <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminDashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/courses"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminCourseListPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/courses/:courseId"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminCourseDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/chapters/:chapterId"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminChapterDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/topics/:topicId"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminTopicDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/topics/:topicId/lessons/:lessonId"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminLessonEditorPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/topics/:topicId/questions/:questionId"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminQuestionEditorPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/topics/:topicId/practice-config"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminPracticeConfigPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/chapters/:chapterId/final-test"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminChapterFinalTestBuilderPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* Admin routes - wrapped in AdminLayout (sidebar + topbar) */}
+        <Route element={<ProtectedRoute requiredRole="admin"><AdminLayout /></ProtectedRoute>}>
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/courses" element={<AdminCourseListPage />} />
+          <Route path="/admin/courses/:courseId" element={<AdminCourseDetailPage />} />
+          <Route path="/admin/chapters/:chapterId" element={<AdminChapterDetailPage />} />
+          <Route path="/admin/topics/:topicId" element={<AdminTopicDetailPage />} />
+          <Route path="/admin/topics/:topicId/lessons/:lessonId" element={<AdminLessonEditorPage />} />
+          <Route path="/admin/topics/:topicId/questions/:questionId" element={<AdminQuestionEditorPage />} />
+          <Route path="/admin/topics/:topicId/practice-config" element={<AdminPracticeConfigPage />} />
+          <Route path="/admin/chapters/:chapterId/final-test" element={<AdminChapterFinalTestBuilderPage />} />
+        </Route>
 
         {/* Shared */}
         <Route
