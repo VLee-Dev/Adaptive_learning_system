@@ -196,7 +196,8 @@ export default function AdminCourseDetailPage() {
       </form>
 
       <div className="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[560px]">
           <thead className="bg-stone-50 text-stone-600 text-left text-xs uppercase">
             <tr>
               <th className="px-4 py-3 w-16">#</th>
@@ -297,6 +298,7 @@ export default function AdminCourseDetailPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

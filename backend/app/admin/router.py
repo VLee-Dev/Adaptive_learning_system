@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.admin.dependencies import require_admin
-from app.admin.schemas import ChapterAdminResponse, ChapterCreate, ChapterUpdate, CourseAdminResponse, CourseCreate, CourseUpdate, FinalTestCreate, FinalTestResponse, LessonAdminResponse, LessonCreate, LessonUpdate, PracticeConfigCreate, PracticeConfigResponse, PracticeConfigUpdate, QuestionAdminResponse, QuestionCreate, QuestionUpdate, TestPoolCreate, TestPoolResponse, TestSlotCreate, TestSlotResponse, TopicAdminResponse, TopicCreate, TopicUpdate
-from app.admin.service import assign_pool_to_slot, assign_question_to_pool, create_admin_practice_config, create_chapter, create_course, create_final_test, create_lesson, create_question, create_test_pool, create_test_slot, create_topic, get_admin_final_test, get_admin_practice_config, list_admin_chapters, list_admin_courses, list_admin_lessons, list_admin_questions, list_admin_topics, remove_admin_practice_config, remove_chapter, remove_course, remove_lesson, remove_question, remove_topic, update_admin_practice_config, update_chapter, update_course, update_lesson, update_question, update_topic
+from app.admin.schemas import ChapterAdminResponse, ChapterCreate, ChapterUpdate, CourseAdminResponse, CourseCreate, CourseUpdate, FinalTestCreate, FinalTestResponse, LessonAdminResponse, LessonCreate, LessonUpdate, QuestionAdminResponse, QuestionCreate, QuestionUpdate, TestPoolCreate, TestPoolResponse, TestSlotCreate, TestSlotResponse, TopicAdminResponse, TopicCreate, TopicUpdate
+from app.admin.service import assign_pool_to_slot, assign_question_to_pool, create_chapter, create_course, create_final_test, create_lesson, create_question, create_test_pool, create_test_slot, create_topic, get_admin_final_test, list_admin_chapters, list_admin_courses, list_admin_lessons, list_admin_questions, list_admin_topics, remove_chapter, remove_course, remove_lesson, remove_question, remove_topic, update_chapter, update_course, update_lesson, update_question, update_topic
 from core.database import get_db
 from app.users.model import User
 
@@ -216,37 +216,3 @@ def add_pool_to_test_slot(slot_id: int, pool_id: int, _: User = Depends(require_
         return assign_pool_to_slot(db, slot_id, pool_id)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
-
-
-@router.get("/practice-config/{topic_id}", response_model=PracticeConfigResponse)
-def get_practice_config_route(topic_id: int, _: User = Depends(require_admin), db: Session = Depends(get_db)):
-    try:
-        return get_admin_practice_config(db, topic_id)
-    except LookupError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-
-
-@router.post("/practice-config/{topic_id}", response_model=PracticeConfigResponse, status_code=status.HTTP_201_CREATED)
-def create_practice_config_route(topic_id: int, payload: PracticeConfigCreate, _: User = Depends(require_admin), db: Session = Depends(get_db)):
-    try:
-        return create_admin_practice_config(db, topic_id, payload)
-    except LookupError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
-
-
-@router.patch("/practice-config/{topic_id}", response_model=PracticeConfigResponse)
-def update_practice_config_route(topic_id: int, payload: PracticeConfigUpdate, _: User = Depends(require_admin), db: Session = Depends(get_db)):
-    try:
-        return update_admin_practice_config(db, topic_id, payload)
-    except LookupError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-
-
-@router.delete("/practice-config/{topic_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_practice_config_route(topic_id: int, _: User = Depends(require_admin), db: Session = Depends(get_db)):
-    try:
-        remove_admin_practice_config(db, topic_id)
-    except LookupError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

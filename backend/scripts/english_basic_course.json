@@ -1,0 +1,353 @@
+{
+  "course": {
+    "name": "Tiếng Anh Cơ Bản (A1-A2)",
+    "description": "Khóa học tiếng Anh nền tảng cho người mới bắt đầu. Gồm từ vựng, ngữ pháp, giao tiếp hằng ngày và đọc hiểu. Mỗi chương có 4 chủ đề với 10 câu hỏi luyện tập và 10 câu kiểm tra cuối chương.",
+    "is_published": true
+  },
+  "chapters": [
+    {
+      "title": "Chương 1: Từ vựng và Chào hỏi cơ bản",
+      "description": "Học bảng chữ cái, số đếm, màu sắc, câu chào hỏi thông dụng.",
+      "topics": [
+        {
+          "name": "Bảng chữ cái và Phát âm",
+          "description": "Làm quen 26 chữ cái tiếng Anh và cách phát âm chuẩn.",
+          "type": "grammar",
+          "questions": [
+            ["Which letter comes after B?", "C", "A", "D", "E"],
+            ["How many letters are there in the English alphabet?", "26", "24", "28", "30"],
+            ["What is the first letter of the English alphabet?", "A", "B", "C", "D"],
+            ["Which letter is pronounced as 'zee' in American English?", "Z", "S", "X", "Y"],
+            ["Which vowel is NOT in the word 'CAT'?", "U", "A", "E", "I"],
+            ["What is the capital letter form of 'd'?", "D", "B", "P", "Q"],
+            ["Which letter is a consonant: A, E, O, or B?", "B", "A", "E", "O"],
+            ["What comes after 'M' in the alphabet?", "N", "L", "O", "P"],
+            ["Which letter is shaped like a circle?", "O", "I", "L", "T"],
+            ["What is the last letter of the English alphabet?", "Z", "X", "Y", "W"]
+          ]
+        },
+        {
+          "name": "Số đếm từ 1 đến 100",
+          "description": "Học đọc, viết và sử dụng số đếm trong tiếng Anh.",
+          "type": "general",
+          "questions": [
+            ["How do you spell the number 7?", "Seven", "Seaven", "Seveen", "Sevn"],
+            ["What is 10 + 5 in English?", "Fifteen", "Fiveteen", "Fifty", "Fifty-five"],
+            ["Which is correct: 'twenty-one' or 'twenty one'?", "Twenty-one", "Twenty one", "Both are correct", "Neither"],
+            ["How do you say 30 in English?", "Thirty", "Thirteen", "Three", "Thirsty"],
+            ["What number comes after 19?", "20", "18", "21", "29"],
+            ["How do you spell 40?", "Forty", "Fourty", "Fourtie", "Fourthy"],
+            ["What is 100 in words?", "One hundred", "A hundred", "Hundred", "One hundredth"],
+            ["Which is the correct spelling?", "Eighty", "Eightty", "Eight", "Eighty-one"],
+            ["What number is 'twelve'?", "12", "20", "2", "21"],
+            ["How do you say 0 in English?", "Zero", "Nought", "Nil", "All of the above"]
+          ]
+        },
+        {
+          "name": "Màu sắc cơ bản",
+          "description": "Học tên các màu sắc tiếng Anh và cách dùng trong câu.",
+          "type": "general",
+          "questions": [
+            ["What color is the sky on a clear day?", "Blue", "Green", "White", "Red"],
+            ["What color do you get when you mix red and yellow?", "Orange", "Purple", "Pink", "Brown"],
+            ["Which color is a banana?", "Yellow", "Green", "Red", "Purple"],
+            ["What color is grass?", "Green", "Blue", "Yellow", "Brown"],
+            ["Which is a primary color: pink, orange, green, or purple?", "Green", "Pink", "Orange", "Purple"],
+            ["What color is a stop sign?", "Red", "Yellow", "Green", "Blue"],
+            ["How do you spell the color 'trắng'?", "White", "Wite", "Wight", "Whight"],
+            ["What color do you get mixing blue and yellow?", "Green", "Red", "Purple", "Orange"],
+            ["What color is snow?", "White", "Gray", "Blue", "Silver"],
+            ["Which is NOT a color: cat, red, blue, or green?", "Cat", "Red", "Blue", "Green"]
+          ]
+        },
+        {
+          "name": "Câu chào hỏi thông dụng",
+          "description": "Học các câu chào hỏi, giới thiệu bản thân và đáp lại lịch sự.",
+          "type": "general",
+          "questions": [
+            ["How do you say 'Xin chào' formally?", "Hello", "Hi", "Hey", "Yo"],
+            ["What do you say when meeting someone for the first time?", "Nice to meet you", "Goodbye", "See you later", "How old are you"],
+            ["How do you ask someone's name politely?", "What is your name?", "Who are you?", "Your name?", "Name please"],
+            ["What is the response to 'How are you?'", "I'm fine, thank you", "Yes", "No", "Good morning"],
+            ["How do you say goodbye in the evening?", "Good night", "Goodbye", "See you", "Hi"],
+            ["What do you say before eating?", "Bon appétit", "Good luck", "Good morning", "Goodbye"],
+            ["How do you say 'Cảm ơn'?", "Thank you", "Please", "Sorry", "Hello"],
+            ["What is the polite response to 'Thank you'?", "You're welcome", "Thank you", "No", "Yes"],
+            ["How do you apologize in English?", "I'm sorry", "Excuse me please", "Pardon", "Forgive"],
+            ["What do you say when you don't understand?", "Excuse me?", "What?", "Repeat", "Sorry you"]
+          ]
+        }
+      ],
+      "final_test": [
+        ["Choose the correct greeting for the morning.", "Good morning", "Good night", "Goodbye", "Good day"],
+        ["What is the correct spelling of 25?", "Twenty-five", "Twenty five", "Twentie-five", "Twentyfife"],
+        ["What color do you mix red and blue to get?", "Purple", "Orange", "Green", "Yellow"],
+        ["How do you say 'Rất vui được gặp bạn'?", "Nice to meet you", "How are you", "See you", "Good morning"],
+        ["Which letter comes after X?", "Y", "W", "Z", "V"],
+        ["How do you say 'Không có gì' (response to thank you)?", "You're welcome", "Thank you", "Sorry", "Please"],
+        ["What is the number after 99?", "nine nine zero", "ninety-nine", "one hundred", "ninety-nine + 1"],
+        ["What is the response to 'Good morning'?", "Good morning", "Good night", "Hello you", "Thank you"],
+        ["Which is the correct spelling?", "3 - Three", "Fifteen", "Fourty", "Ninty"],
+        ["How do you say goodbye?", "Goodbye / Bye", "Hello", "Hi", "Good morning"]
+      ]
+    },
+    {
+      "title": "Chương 2: Ngữ pháp cơ bản",
+      "description": "Học các thì hiện tại đơn, quá khứ đơn, tương lai và trợ động từ.",
+      "topics": [
+        {
+          "name": "Thì hiện tại đơn (Simple Present)",
+          "description": "Cách dùng thì hiện tại đơn để nói thói quen và sự thật.",
+          "type": "grammar",
+          "questions": [
+            ["Which is correct: 'She go to school' or 'She goes to school'?", "She goes to school", "She go to school", "Both are correct", "Neither"],
+            ["What is the negative form of 'I eat rice'?", "I don't eat rice", "I not eat rice", "I doesn't eat rice", "I am not eat rice"],
+            ["Choose the correct question: ___ you like coffee?", "Do", "Does", "Is", "Are"],
+            ["'The Earth ___ around the Sun.' (present simple)", "moves", "move", "is moving", "moved"],
+            ["What comes after the subject 'He' in present simple?", "verb + s/es", "base verb", "verb + ing", "did + verb"],
+            ["Which is a daily routine verb: sleep, ran, will sleep, slept?", "sleep", "ran", "will sleep", "slept"],
+            ["How do you make 'I play tennis' negative?", "I don't play tennis", "I not play tennis", "I doesn't play tennis", "I'm not play tennis"],
+            ["'They ___ in Hanoi.' (live)", "live", "lives", "living", "lived"],
+            ["Which word is NOT used in present simple?", "yesterday", "always", "usually", "often"],
+            ["What is the question form of 'You like music'?", "Do you like music?", "Are you like music?", "You like music?", "Does you like music?"]
+          ]
+        },
+        {
+          "name": "Thì quá khứ đơn (Simple Past)",
+          "description": "Cách dùng thì quá khứ đơn với động từ có quy tắc và bất quy tắc.",
+          "type": "grammar",
+          "questions": [
+            ["What is the past tense of 'go'?", "went", "goed", "gone", "going"],
+            ["What is the past tense of 'eat'?", "ate", "eated", "eaten", "eating"],
+            ["Which is correct: 'I saw a movie yesterday' or 'I seen a movie yesterday'?", "I saw a movie yesterday", "I seen a movie yesterday", "Both are correct", "Neither"],
+            ["What is the negative of 'She worked hard'?", "She didn't work hard", "She not worked hard", "She doesn't work hard", "She didn't worked hard"],
+            ["Which is a past time signal?", "yesterday", "tomorrow", "now", "always"],
+            ["What is the past tense of 'buy'?", "bought", "buyed", "buys", "buying"],
+            ["How do you ask a past question?", "Did you + verb", "Do you + verb", "Are you + verb", "Was you + verb"],
+            ["'I ___ to Paris last summer.' (travel)", "past", "travel", "travelled", "All of the above"],
+            ["Which is NOT a past tense verb: ran, swim, walked, studied?", "ran", "swim", "walked", "studied"],
+            ["What is the past of 'have'?", "had", "haved", "has", "having"]
+          ]
+        },
+        {
+          "name": "Thì tương lai (Future Simple - will/going to)",
+          "description": "Diễn đạt kế hoạch và dự đoán tương lai.",
+          "type": "grammar",
+          "questions": [
+            ["Which is correct: 'I will go' or 'I shall go'?", "Both are correct", "Only I will go", "Only I shall go", "Neither"],
+            ["What is 'going to' used for?", "plans/intentions", "past events", "present habits", "commands"],
+            ["Choose the correct form: 'She ___ visit her mom tomorrow.'", "is going to", "go", "going", "gone"],
+            ["What comes after 'will'?", "base verb", "verb + s", "verb + ing", "past verb"],
+            ["'I think it ___ rain tomorrow.'", "will her me", "will", "is", "going"],
+            ["Which sentence is a prediction?", "It will rain tomorrow", "I am eating now", "I went home", "I eat daily"],
+            ["What is the negative of 'I will come'?", "I won't come", "I don't come", "I will not comes", "I not come"],
+            ["'We ___ have dinner at 7 PM.' (planned)", "are going to", "will", "going", "go"],
+            ["What is the short form of 'will not'?", "won't", "wont", "willn't", "wlln't"],
+            ["Which is a future time signal?", "next week", "yesterday", "now", "last year"]
+          ]
+        },
+        {
+          "name": "Trợ động từ Be, Do, Have",
+          "description": "Cách dùng be, do, have làm trợ động từ trong câu hỏi và phủ định.",
+          "type": "grammar",
+          "questions": [
+            ["Which is the auxiliary 'to be' form for 'I'?", "am", "is", "are", "be"],
+            ["Which auxiliary is used for present simple questions?", "do/does", "am/is/are", "have/has", "will"],
+            ["What is the auxiliary of 'have' for 'she'?", "has", "have", "had", "having"],
+            ["How do you form a negative with 'be'?", "be + not", "not + be", "do + not + be", "be + no"],
+            ["Which is correct: 'She is a teacher' or 'She are a teacher'?", "She is a teacher", "She are a teacher", "Both", "Neither"],
+            ["What is the question form of 'You are happy'?", "Are you happy?", "Is you happy?", "Do you happy?", "You are happy?"],
+            ["Which auxiliary is used with 'have got'?", "have/has", "do/does", "am/is/are", "will"],
+            ["'___ you like coffee?' What auxiliary?", "Do", "Are", "Is", "Have"],
+            ["What is the negative of 'He has a car'?", "He doesn't have a car", "He not has a car", "He don't have a car", "He hasn't a car"],
+            ["Which is NOT an auxiliary verb: am, do, have, run?", "run", "am", "do", "have"]
+          ]
+        }
+      ],
+      "final_test": [
+        ["Which tense: 'I eat breakfast every day'?", "Simple present", "Simple past", "Future", "Present continuous"],
+        ["What is the past tense of 'see'?", "saw", "seed", "seen", "seeing"],
+        ["'She ___ to school every day.' (go)", "goes", "go", "going", "went"],
+        ["What comes after 'will'?", "base verb", "verb + s", "verb + ing", "past verb"],
+        ["How do you make 'I play' negative?", "I don't play", "I not play", "I doesn't play", "I'm not play"],
+        ["Which is past tense: ran, runs, running, will run?", "ran", "runs", "running", "will run"],
+        ["What auxiliary for present simple questions?", "do/does", "am/is/are", "have", "will"],
+        ["'I ___ visit grandma tomorrow.' (planned)", "am going to", "will", "go", "going"],
+        ["What is the past of 'buy'?", "bought", "buyed", "buys", "buying"],
+        ["Which is a past time signal?", "yesterday", "tomorrow", "now", "always"]
+      ]
+    },
+    {
+      "title": "Chương 3: Giao tiếp hằng ngày",
+      "description": "Học cách đặt câu hỏi, mua sắm, hỏi đường và nói về gia đình.",
+      "topics": [
+        {
+          "name": "Giới thiệu bản thân và gia đình",
+          "description": "Nói về tên, tuổi, nghề nghiệp và các thành viên trong gia đình.",
+          "type": "general",
+          "questions": [
+            ["How do you ask someone's age?", "How old are you?", "What age you?", "How age are you?", "Age please"],
+            ["How do you ask about someone's occupation?", "What do you do?", "What your job?", "Job please", "How is job"],
+            ["What is 'my father' in English?", "my father", "my dad", "my papa", "All of the above"],
+            ["How do you say 'tôi 25 tuổi'?", "I am 25 years old", "I have 25", "I 25 years", "My age 25"],
+            ["What is the word for 'chị gái'?", "sister", "brother", "mother", "aunt"],
+            ["How do you introduce yourself?", "My name is...", "I am called...", "Call me...", "All of the above"],
+            ["What is 'mẹ tôi' in English?", "my mother", "my mom", "my mama", "All of the above"],
+            ["What is the word for 'anh trai'?", "brother", "sister", "father", "uncle"],
+            ["How do you say 'Tôi là học sinh'?", "I am a student", "I student", "I am student", "I'm student"],
+            ["How do you say 'gia đình tôi có 4 người'?", "My family has 4 people", "My family 4", "I have family 4", "Family 4 people"]
+          ]
+        },
+        {
+          "name": "Hỏi và chỉ đường",
+          "description": "Học cách hỏi đường và chỉ đường trong thành phố.",
+          "type": "general",
+          "questions": [
+            ["How do you ask for directions politely?", "Excuse me, how do I get to...?", "Where is...", "Tell me way...", "I want go..."],
+            ["What does 'turn left' mean?", "rẽ trái", "rẽ phải", "đi thẳng", "quay lại"],
+            ["What does 'go ahead' or 'go straight' mean?", "đi thẳng", "rẽ trái", "rẽ phải", "quay lại"],
+            ["What is 'opposite' in direction?", "đối diện", "bên cạnh", "phía sau", "phía trước"],
+            ["How do you say 'gần'?", "near / close to", "next to", "far", "behind"],
+            ["What does 'on the corner' mean?", "ở góc đường", "ở giữa", "ở cuối", "ở đầu"],
+            ["How do you say 'Ngân hàng ở đâu?'", "Where is the bank?", "What is bank?", "Bank please", "Bank is"],
+            ["What is 'behind'?", "phía sau", "phía trước", "bên cạnh", "giữa"],
+            ["What does 'next to' mean?", "bên cạnh", "phía sau", "đối diện", "xa"],
+            ["What is the word for 'quảng trường'?", "square", "street", "road", "avenue"]
+          ]
+        },
+        {
+          "name": "Mua sắm và giá cả",
+          "description": "Từ vựng và mẫu câu dùng khi mua sắm, hỏi giá, mặc cả.",
+          "type": "general",
+          "questions": [
+            ["How do you ask the price?", "How much is it?", "How many?", "How price?", "What price?"],
+            ["What does 'expensive' mean?", "đắt", "rẻ", "miễn phí", "giảm giá"],
+            ["What is the opposite of 'expensive'?", "cheap", "costly", "pricey", "valuable"],
+            ["How do you say 'rẻ hơn một chút'?", "a little cheaper", "more cheap", "cheap more", "very cheap"],
+            ["What does 'discount' mean?", "giảm giá", "tăng giá", "miễn phí", "đắt"],
+            ["How do you ask 'Tôi có thể dùng thử không?'", "Can I try it on?", "I try please", "May I try?", "Try for me"],
+            ["What is 'size' in clothing?", "size", "big", "small", "color"],
+            ["How do you say 'thanh toán bằng thẻ'?", "pay by card", "pay card", "card pay", "I card"],
+            ["What does 'receipt' mean?", "hóa đơn", "thẻ", "tiền", "túi"],
+            ["How do you say 'Có size nào khác không?'", "Do you have another size?", "Size other?", "Other size please", "What size"]
+          ]
+        },
+        {
+          "name": "Nói về thời tiết",
+          "description": "Mô tả thời tiết và nói về các hoạt động theo mùa.",
+          "type": "general",
+          "questions": [
+            ["How do you ask about weather?", "What's the weather like?", "How weather?", "Weather is?", "Weather please"],
+            ["What is 'mưa'?", "rain", "snow", "wind", "cloud"],
+            ["How do you say 'nắng'?", "sunny", "hot", "bright", "shiny"],
+            ["What does 'cloudy' mean?", "nhiều mây", "mưa", "nắng", "lạnh"],
+            ["What is 'lạnh'?", "cold", "hot", "warm", "cool"],
+            ["What is 'windy'?", "có gió", "mưa", "nắng", "tuyết"],
+            ["How do you say 'Tôi thích mùa hè'?", "I like summer", "I love summer", "Summer is my favorite", "All of the above"],
+            ["What is 'snow' in Vietnamese?", "tuyết", "mưa", "mây", "sương"],
+            ["What is 'storm'?", "bão", "gió", "mưa nhỏ", "nắng"],
+            ["How do you say 'Nhiệt độ bao nhiêu?'", "What is the temperature?", "How temperature?", "Temperature is?", "Temp please"]
+          ]
+        }
+      ],
+      "final_test": [
+        ["How do you ask someone's name?", "What is your name?", "Name please?", "Who you?", "Your name is?"],
+        ["What does 'go straight' mean?", "đi thẳng", "rẽ trái", "rẽ phải", "quay lại"],
+        ["How do you ask the price?", "How much is it?", "How many?", "How price?", "What cost?"],
+        ["What is 'sunny'?", "nắng", "mưa", "mây", "gió"],
+        ["What is 'sister' in Vietnamese?", "chị/em gái", "anh/em trai", "mẹ", "bố"],
+        ["What is the opposite of 'expensive'?", "cheap", "costly", "high", "big"],
+        ["How do you say 'Tôi 20 tuổi'?", "I am 20 years old", "I have 20", "I 20", "My age 20"],
+        ["What does 'next to' mean?", "bên cạnh", "phía sau", "đối diện", "xa"],
+        ["What is 'rain' in Vietnamese?", "mưa", "tuyết", "nắng", "gió"],
+        ["How do you ask for directions politely?", "Excuse me, how do I get to...?", "Where is...?", "Tell me way...", "Direction?"]
+      ]
+    },
+    {
+      "title": "Chương 4: Đọc hiểu và Nghe hiểu",
+      "description": "Luyện đọc hiểu đoạn văn ngắn và nghe hiểu hội thoại đơn giản.",
+      "topics": [
+        {
+          "name": "Đọc hiểu - Đoạn văn ngắn",
+          "description": "Đọc và trả lời câu hỏi về nội dung đoạn văn.",
+          "type": "general",
+          "questions": [
+            ["What is 'reading comprehension'?", "đọc hiểu", "nghe hiểu", "viết", "nói"],
+            ["Which is a reading strategy?", "skimming", "listening", "speaking", "writing"],
+            ["What does 'main idea' mean?", "ý chính", "ý phụ", "chi tiết", "từ vựng"],
+            ["What is 'detail' in reading?", "chi tiết", "ý chính", "tóm tắt", "tiêu đề"],
+            ["What does 'skimming' mean?", "đọc lướt lấy ý chính", "đọc kỹ", "đọc từng từ", "đọc nhanh từ cuối"],
+            ["What is 'scanning'?", "đọc tìm thông tin cụ thể", "đọc từ đầu", "đọc kỹ", "đọc lướt"],
+            ["What is a 'paragraph'?", "đoạn văn", "câu", "từ", "trang"],
+            ["What is 'topic sentence'?", "câu chủ đề", "câu kết", "câu hỏi", "tiêu đề"],
+            ["What does 'context' help you with?", "hiểu nghĩa từ", "phát âm", "viết", "nghe"],
+            ["What is 'vocabulary'?", "từ vựng", "ngữ pháp", "phát âm", "đọc"]
+          ]
+        },
+        {
+          "name": "Nghe hiểu - Hội thoại đơn giản",
+          "description": "Nghe và hiểu các đoạn hội thoại ngắn trong tình huống thường ngày.",
+          "type": "listening",
+          "questions": [
+            ["What is 'listening comprehension'?", "nghe hiểu", "đọc hiểu", "viết", "nói"],
+            ["What does 'greeting' mean?", "chào hỏi", "tạm biệt", "xin lỗi", "cảm ơn"],
+            ["Which is a common greeting?", "Hello / Hi", "Goodbye", "Sorry", "Thanks"],
+            ["What does 'farewell' mean?", "tạm biệt", "chào", "xin lỗi", "cảm ơn"],
+            ["What is 'introduction'?", "giới thiệu", "kết thúc", "hỏi", "đáp"],
+            ["What is the word for 'câu hỏi'?", "question", "answer", "reply", "response"],
+            ["What does 'answer' mean?", "trả lời", "hỏi", "nói", "nghe"],
+            ["What is 'dialogue'?", "hội thoại", "độc thoại", "bài phát biểu", "thông báo"],
+            ["What does 'polite' mean?", "lịch sự", "thô lỗ", "nhanh", "chậm"],
+            ["What is 'conversation'?", "cuộc trò chuyện", "bài giảng", "phỏng vấn", "thông báo"]
+          ]
+        },
+        {
+          "name": "Từ vựng theo chủ đề - Địa điểm và Phương tiện",
+          "description": "Học từ vựng về địa điểm công cộng và phương tiện giao thông.",
+          "type": "general",
+          "questions": [
+            ["What is 'airport' in Vietnamese?", "sân bay", "nhà ga", "bến xe", "bến tàu"],
+            ["What does 'bus station' mean?", "bến xe buýt", "sân bay", "nhà ga", "bến tàu"],
+            ["What is 'train'?", "tàu hỏa", "xe buýt", "máy bay", "xe đạp"],
+            ["What is 'bicycle'?", "xe đạp", "xe máy", "ô tô", "xe buýt"],
+            ["What does 'subway' mean?", "tàu điện ngầm", "tàu hỏa", "xe buýt", "máy bay"],
+            ["What is 'hotel'?", "khách sạn", "nhà hàng", "bệnh viện", "trường học"],
+            ["What does 'restaurant' mean?", "nhà hàng", "khách sạn", "quán cà phê", "cửa hàng"],
+            ["What is 'hospital'?", "bệnh viện", "trường học", "ngân hàng", "bưu điện"],
+            ["What does 'library' mean?", "thư viện", "hiệu sách", "trường học", "bảo tàng"],
+            ["What is 'museum'?", "bảo tàng", "thư viện", "rạp chiếu phim", "công viên"]
+          ]
+        },
+        {
+          "name": "Kỹ năng viết câu đơn giản",
+          "description": "Tập viết câu đơn, viết thư ngắn và viết đoạn văn bản.",
+          "type": "general",
+          "questions": [
+            ["What is a 'sentence'?", "câu", "từ", "đoạn văn", "trang"],
+            ["What does a sentence start with?", "capital letter", "lowercase letter", "number", "punctuation"],
+            ["What ends a sentence?", "period (.)", "comma (,)", "space", "no mark"],
+            ["Which is a sentence: 'Hello.' or 'Hello'?", "'Hello.' is a sentence", "Both are sentences", "Neither", "Only with name"],
+            ["What is 'paragraph'?", "đoạn văn", "câu", "từ", "trang"],
+            ["How do you write a letter start?", "Dear + name,", "Hello + name.", "Hey name,", "Hi + name"],
+            ["What is 'subject' in a sentence?", "chủ ngữ", "vị ngữ", "tân ngữ", "trạng ngữ"],
+            ["What is 'verb'?", "động từ", "danh từ", "tính từ", "trạng từ"],
+            ["What is 'noun'?", "danh từ", "động từ", "tính từ", "phó từ"],
+            ["What is 'adjective'?", "tính từ", "danh từ", "động từ", "trạng từ"]
+          ]
+        }
+      ],
+      "final_test": [
+        ["What is 'reading comprehension'?", "đọc hiểu", "nghe hiểu", "viết", "nói"],
+        ["What does 'main idea' mean?", "ý chính", "ý phụ", "chi tiết", "từ vựng"],
+        ["What is 'listening comprehension'?", "nghe hiểu", "đọc hiểu", "viết", "nói"],
+        ["What is 'airport'?", "sân bay", "nhà ga", "bến xe", "bến tàu"],
+        ["What is a 'sentence'?", "câu", "từ", "đoạn văn", "trang"],
+        ["What does a sentence start with?", "capital letter", "lowercase", "number", "symbol"],
+        ["What is 'topic sentence'?", "câu chủ đề", "câu kết", "câu hỏi", "tiêu đề"],
+        ["What does 'farewell' mean?", "tạm biệt", "chào", "xin lỗi", "cảm ơn"],
+        ["What is 'library'?", "thư viện", "hiệu sách", "trường học", "bảo tàng"],
+        ["What is 'verb'?", "động từ", "danh từ", "tính từ", "trạng từ"]
+      ]
+    }
+  ]
+}

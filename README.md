@@ -81,17 +81,71 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - Zod `.refine((v) => v === true, { message })` thay cho `z.literal(true, { errorMap })` ở phiên bản mới.
 - 2 Layout pattern: `bare` cho full-bleed (không header) và layout thường cho app - tách ở `App.tsx` bằng 2 `<Layout>` block.
 
+### [Commit cdd9067] Landing page redesign + Auth flow + ErrorBoundary
+
+**Frontend:**
+- Redesign toàn bộ Landing/Login/Register pages với theme Neko mới.
+- Thêm `ErrorBoundary` component để catch errors globally.
+- Thêm images mới: `icon.png`, `landscaping.png`.
+- Cải thiện UX với toast notifications và smooth transitions.
+- Refactor layout structure cho rõ ràng hơn.
+
+### [Commit 4f5f330] Admin & Student Frontend - HOÀN CHỈNH
+
+**Admin Pages (9 trang):**
+- **AdminDashboardPage**: Tổng quan với stats (tổng khóa học, đã xuất bản, tổng chương).
+- **AdminCourseListPage**: CRUD courses với table view + search.
+- **AdminCourseDetailPage**: Chi tiết course + quản lý chapters inline.
+- **AdminChapterDetailPage**: Chi tiết chapter + quản lý topics + link đến final test builder.
+- **AdminTopicDetailPage**: Chi tiết topic + tabs cho lessons/questions/practice config.
+- **AdminLessonEditorPage**: Tạo/sửa lessons với markdown editor.
+- **AdminQuestionEditorPage**: Tạo/sửa questions với format selection.
+- **AdminPracticeConfigPage**: Cấu hình BKT practice (starting level, mastery thresholds, questions per level, limits).
+- **AdminChapterFinalTestBuilderPage**: Tạo final test với slot/pool system (drag-drop style UI).
+
+**Student Pages (8 trang):**
+- **StudentDashboardPage**: Welcome screen + quick navigation cards.
+- **StudentCourseCatalogPage**: Danh sách khóa học published với card layout.
+- **StudentCourseDetailPage**: Chi tiết course + chapters list + completion tracking per chapter.
+- **StudentChapterDetailPage**: Chi tiết chapter + topics list + mastery display (progress bars) + final test button.
+- **StudentTopicDetailPage**: Chi tiết topic + lessons list + practice button.
+- **StudentLessonViewPage**: Xem nội dung lesson (markdown rendering).
+- **StudentPracticePage**: BKT adaptive practice session - real-time feedback, mastery updates, level changes.
+- **StudentChapterTestPage**: Chapter final test - multi-step form, scoring, detailed results.
+
+**Shared Pages:**
+- **ProfilePage**: Xem profile + đổi mật khẩu với validation.
+
+**Components & Infrastructure:**
+- **AdminLayout**: Layout riêng cho admin với sidebar navigation + breadcrumbs.
+- **adminApi.ts** (~280 dòng): Typed API helpers cho TẤT CẢ admin endpoints (Course/Chapter/Topic/Lesson/Question/FinalTest/PracticeConfig CRUD).
+- **Type definitions**: `topic.ts`, `lesson.ts`, `question.ts` với enums và interfaces.
+
+**UI/UX:**
+- Consistent design language: rounded-2xl cards, shadow-cozy, cream/paw colors.
+- Loading states và error handling đầy đủ cho tất cả pages.
+- Responsive design với mobile-friendly navigation.
+- Toast notifications cho user feedback.
+
+
 ### Trạng thái hiện tại
 
-**Hoàn thành:** Database (20 bảng), Auth/JWT, 49 API endpoints, BKT algorithm, adaptive practice, chapter test với slot/pool system, frontend skeleton với routing cho 26 trang, 3 trang đầu tiên (Landing/Login/Register) với kết nối API thật. Backend + frontend sẵn sàng tích hợp UI từng trang.
+**Hoàn thành:** 
+- Database (20 bảng) với BKT support
+- Auth/JWT với role-based access
+- 49 API endpoints (Admin CRUD + Student learning + BKT adaptive)
+- BKT algorithm implementation
+- Chapter test với slot/pool system
+- **Frontend hoàn chỉnh: 17+ trang (9 Admin + 8 Student + shared pages)**
+- **AdminLayout + ErrorBoundary + Toaster components**
+- **adminApi.ts với typed helpers cho tất cả endpoints**
+- **Full integration: UI ↔ API ↔ Database**
 
-**Tài liệu:**
-- `PROJECT_KNOWLEDGE.md` - Kiến thức kỹ thuật tổng hợp (Git ignored)
-- `IMPLEMENTATION_REPORT.md` - Chi tiết implementation
-- `API_DOCUMENTATION.md` - API reference với curl examples
-- `backend/scripts/README_SEED.md` - Hướng dẫn seed
 
-**Chưa có:** UI cho 23 trang còn lại (Student flow + Admin flow + Profile), Recommendation engine (cuối cùng).
+**Chưa có:** 
+- Một số trang placeholder còn lại (HistoryPage, LearnPage, TestPage - có thể không cần thiết cho MVP)
+- Recommendation engine (planned for future)
+- Production infrastructure (Redis, logging, monitoring)
 
 ## Phần 2 - Hướng dẫn sử dụng dự án
 

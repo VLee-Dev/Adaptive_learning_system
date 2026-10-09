@@ -39,9 +39,7 @@ export default function AdminChapterDetailPage() {
     setLoading(true)
     try {
       setTopics(await topicAdminGet.list(chapterIdNum))
-      // try to find which course this chapter belongs to
-      // We don't have a direct /admin/chapters/{id} endpoint; iterate via course list.
-      const allCourses = await api.get<{ id: number }[]>('/admin/courses').then((r) => r.data)
+           const allCourses = await api.get<{ id: number }[]>('/admin/courses').then((r) => r.data)
       let found: Chapter | null = null
       for (const c of allCourses) {
         const list = await chapterAdminGet.list(c.id).catch(() => [] as Chapter[])
@@ -68,7 +66,6 @@ export default function AdminChapterDetailPage() {
 
   useEffect(() => {
     load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapterIdNum])
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -232,7 +229,8 @@ export default function AdminChapterDetailPage() {
       </form>
 
       <div className="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
           <thead className="bg-stone-50 text-stone-600 text-left text-xs uppercase">
             <tr>
               <th className="px-4 py-3 w-16">#</th>
@@ -350,6 +348,7 @@ export default function AdminChapterDetailPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

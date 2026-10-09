@@ -44,6 +44,9 @@ export default {
       boxShadow: {
         cozy: '0 20px 45px -10px rgba(110, 68, 25, 0.15), 0 8px 16px -6px rgba(110, 68, 25, 0.08)',
       },
+      backgroundImage: {
+        landscape: "url('/images/landscaping.png')",
+      },
     },
   },
   plugins: [],

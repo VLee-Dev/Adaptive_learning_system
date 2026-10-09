@@ -5,8 +5,9 @@ import {
   questionAdminGet,
   type Lesson,
   type Question,
+  type Topic,
 } from '@/lib/adminApi'
-import { toApiError } from '@/lib/api'
+import api, { toApiError } from '@/lib/api'
 import { LESSON_CONTENT_TYPES, type LessonContentType } from '@/types/lesson'
 import { QUESTION_PURPOSES, type QuestionPurpose } from '@/types/question'
 
@@ -16,6 +17,7 @@ export default function AdminTopicDetailPage() {
 
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
+  const [topic, setTopic] = useState<Topic | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -40,12 +42,18 @@ export default function AdminTopicDetailPage() {
     if (!topicIdNum) return
     setLoading(true)
     try {
-      const [ls, qs] = await Promise.all([
+      const [ls, qs, t] = await Promise.all([
         lessonAdminGet.list(topicIdNum),
         questionAdminGet.list(topicIdNum),
+        // Topic detail (public/content endpoint)
+        api
+          .get<Topic>(`/topics/${topicIdNum}`)
+          .then((r) => r.data)
+          .catch(() => null),
       ])
       setLessons(ls)
       setQuestions(qs)
+      setTopic(t)
     } catch (e) {
       setError(toApiError(e).detail)
     } finally {
@@ -137,16 +145,23 @@ export default function AdminTopicDetailPage() {
 
   if (loading) return <div className="text-stone-500">Đang tải…</div>
 
+  const chapterHref = topic
+    ? `/admin/chapters/${topic.chapter_id}`
+    : `/admin/courses` // last-resort fallback
+
   return (
     <div className="max-w-5xl space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-stone-800">Chủ đề #{topicIdNum}</h1>
+      <div className="flex items-center gap-3">
         <Link
-          to={`/admin/topics/${topicIdNum}/practice-config`}
-          className="px-4 py-2 rounded-xl bg-purple-100 text-purple-700 font-semibold text-sm hover:bg-purple-200"
+          to={chapterHref}
+          className="px-3 py-2 rounded-xl bg-stone-100 text-stone-700 font-semibold text-sm hover:bg-stone-200"
+          aria-label="Quay về chương"
         >
-          ⚙️ Practice Config
+          ← Quay về chương
         </Link>
+        <h1 className="text-2xl font-bold text-stone-800">
+          {topic ? topic.name : `Chủ đề #${topicIdNum}`}
+        </h1>
       </div>
 
       {error && (
@@ -217,7 +232,8 @@ export default function AdminTopicDetailPage() {
         </form>
 
         <div className="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead className="bg-stone-50 text-stone-600 text-left text-xs uppercase">
               <tr>
                 <th className="px-4 py-3 w-16">#</th>
@@ -263,6 +279,7 @@ export default function AdminTopicDetailPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </section>
 
@@ -345,7 +362,8 @@ export default function AdminTopicDetailPage() {
         </form>
 
         <div className="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead className="bg-stone-50 text-stone-600 text-left text-xs uppercase">
               <tr>
                 <th className="px-4 py-3 w-16">#</th>
@@ -390,6 +408,7 @@ export default function AdminTopicDetailPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </section>
     </div>

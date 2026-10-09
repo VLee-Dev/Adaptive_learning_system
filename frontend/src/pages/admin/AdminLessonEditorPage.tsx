@@ -51,7 +51,6 @@ export default function AdminLessonEditorPage() {
 
   useEffect(() => {
     load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicIdNum, lessonIdNum])
 
   const save = async (e: React.FormEvent) => {

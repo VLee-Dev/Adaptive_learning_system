@@ -1,8 +1,15 @@
 """BKT mastery update service."""
 from sqlalchemy.orm import Session
 
-from app.mastery.model import TopicMastery, PracticeConfiguration
+from app.mastery.model import TopicMastery
 from app.topics.model import Topic
+
+# ===== HARDCODED BKT THRESHOLDS (không cho admin chỉnh sửa) =====
+QUESTIONS_PER_SESSION = 8      # Tăng từ 5 → 8 để có thêm evidence
+LEVEL_UP_MASTERY = 0.75         # Tăng từ 0.65 → 0.75 để khó lên level hơn
+COMPLETION_MASTERY = 0.90       # Tăng từ 0.85 → 0.90 để khó pass hơn
+REVIEW_MASTERY = 0.50           # Tăng từ 0.4 → 0.5 để dễ trigger review hơn
+STARTING_LEVEL = 1              # Luôn bắt đầu từ level 1
 
 
 def calculate_bkt_update(
@@ -117,25 +124,19 @@ def update_mastery_after_answer(
     mastery.mastery = new_mastery
     mastery.practice_attempts += 1
 
-    # Get practice configuration to check thresholds
-    config = db.query(PracticeConfiguration).filter(
-        PracticeConfiguration.topic_id == topic_id
-    ).first()
+    # Update level based on hardcoded thresholds
+    if new_mastery >= LEVEL_UP_MASTERY and mastery.current_level < 3:
+        mastery.current_level = min(3, mastery.current_level + 1)
+    elif new_mastery < REVIEW_MASTERY and mastery.current_level > 1:
+        mastery.current_level = max(1, mastery.current_level - 1)
 
-    if config:
-        # Update level based on mastery thresholds
-        if new_mastery >= config.level_up_mastery and mastery.current_level < 3:
-            mastery.current_level = min(3, mastery.current_level + 1)
-        elif new_mastery < config.review_mastery and mastery.current_level > 1:
-            mastery.current_level = max(1, mastery.current_level - 1)
-
-        # Update status
-        if new_mastery >= config.completion_mastery:
-            mastery.status = "completed"
-        elif new_mastery < config.review_mastery:
-            mastery.status = "review_required"
-        else:
-            mastery.status = "in_progress"
+    # Update status based on hardcoded thresholds
+    if new_mastery >= COMPLETION_MASTERY:
+        mastery.status = "completed"
+    elif new_mastery < REVIEW_MASTERY:
+        mastery.status = "review_required"
+    else:
+        mastery.status = "in_progress"
 
     db.commit()
     db.refresh(mastery)
@@ -169,17 +170,11 @@ def get_or_create_mastery(
         if topic is None:
             raise LookupError(f"Topic {topic_id} not found")
 
-        config = db.query(PracticeConfiguration).filter(
-            PracticeConfiguration.topic_id == topic_id
-        ).first()
-
-        starting_level = config.starting_level if config else 1
-
         mastery = TopicMastery(
             user_id=user_id,
             topic_id=topic_id,
             mastery=topic.p_init,
-            current_level=starting_level,
+            current_level=STARTING_LEVEL,
             practice_attempts=0,
             status="in_progress"
         )

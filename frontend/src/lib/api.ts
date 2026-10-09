@@ -32,9 +32,6 @@ api.interceptors.response.use(
 )
 
 export default api
-
-// ---- Typed API helpers ----
-
 export interface ApiError {
   detail: string
   status: number

@@ -19,7 +19,6 @@ export default function AdminDashboardPage() {
     ;(async () => {
       try {
         const courses = await courseAdminGet.list()
-        // count chapters for each course in parallel
         const chaptersLists = await Promise.all(
           courses.map((c) => courseAdminGet.listChapters(c.id).catch(() => [] as Chapter[])),
         )

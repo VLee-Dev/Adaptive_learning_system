@@ -31,7 +31,6 @@ import AdminChapterDetailPage from '@/pages/admin/AdminChapterDetailPage'
 import AdminTopicDetailPage from '@/pages/admin/AdminTopicDetailPage'
 import AdminLessonEditorPage from '@/pages/admin/AdminLessonEditorPage'
 import AdminQuestionEditorPage from '@/pages/admin/AdminQuestionEditorPage'
-import AdminPracticeConfigPage from '@/pages/admin/AdminPracticeConfigPage'
 import AdminChapterFinalTestBuilderPage from '@/pages/admin/AdminChapterFinalTestBuilderPage'
 
 // Shared
@@ -140,7 +139,6 @@ function App() {
           <Route path="/admin/topics/:topicId" element={<AdminTopicDetailPage />} />
           <Route path="/admin/topics/:topicId/lessons/:lessonId" element={<AdminLessonEditorPage />} />
           <Route path="/admin/topics/:topicId/questions/:questionId" element={<AdminQuestionEditorPage />} />
-          <Route path="/admin/topics/:topicId/practice-config" element={<AdminPracticeConfigPage />} />
           <Route path="/admin/chapters/:chapterId/final-test" element={<AdminChapterFinalTestBuilderPage />} />
         </Route>
 

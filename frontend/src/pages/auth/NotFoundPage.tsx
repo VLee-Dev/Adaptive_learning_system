@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 
-// A4. NotFoundPage
 export default function NotFoundPage() {
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">

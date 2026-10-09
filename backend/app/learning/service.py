@@ -4,8 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.attempts.model import Attempt
 from app.attempts.repository import create_attempt, get_attempted_question_ids
-from app.mastery.service import get_or_create_mastery, update_mastery_after_answer
-from app.mastery.repository import get_practice_config
+from app.mastery.service import get_or_create_mastery, update_mastery_after_answer, QUESTIONS_PER_SESSION
 from app.questions.repository import get_practice_questions_by_level, get_question_by_id
 from app.topics.model import Topic
 from app.learning.schemas import (
@@ -29,11 +28,6 @@ def get_next_practice_question(db: Session, user_id: int, topic_id: int) -> Ques
     """
     # Get or create mastery record
     mastery = get_or_create_mastery(db, user_id, topic_id)
-
-    # Get practice configuration
-    config = get_practice_config(db, topic_id)
-    if config is None:
-        raise LookupError("Practice configuration not found for this topic")
 
     # Determine which level to use
     current_level = mastery.current_level
