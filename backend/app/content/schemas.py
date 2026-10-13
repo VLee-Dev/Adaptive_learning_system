@@ -12,6 +12,8 @@ class CourseSummary(BaseModel):
     id: int
     name: str
     description: str | None
+    image_url: str | None
+    enrollment_count: int
     created_at: datetime
 
 
@@ -21,7 +23,10 @@ class CourseDetail(BaseModel):
     id: int
     name: str
     description: str | None
+    image_url: str | None
     is_published: bool
+    enrollment_count: int
+    is_enrolled: bool  # False cho public; BE endpoint không require auth nên luôn False
     created_at: datetime
 
 

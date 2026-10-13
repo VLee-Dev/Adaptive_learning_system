@@ -14,7 +14,7 @@ import NotFoundPage from '@/pages/auth/NotFoundPage'
 import ForbiddenPage from '@/pages/auth/ForbiddenPage'
 
 // Student pages
-import StudentDashboardPage from '@/pages/DashboardPage'
+import StudentDashboardPage from '@/pages/student/StudentDashboardPage'
 import StudentCourseCatalogPage from '@/pages/student/StudentCourseCatalogPage'
 import StudentCourseDetailPage from '@/pages/student/StudentCourseDetailPage'
 import StudentChapterDetailPage from '@/pages/student/StudentChapterDetailPage'

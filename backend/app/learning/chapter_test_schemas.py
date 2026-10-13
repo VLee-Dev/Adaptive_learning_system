@@ -1,5 +1,5 @@
 """Schemas for chapter final test."""
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ChapterTestStartResponse(BaseModel):
@@ -21,9 +21,13 @@ class TestQuestionResponse(BaseModel):
 
 
 class ChapterTestSubmitRequest(BaseModel):
-    """Request to submit chapter final test answers."""
+    """Request to submit chapter final test answers.
+
+    B14: Bắt buộc phải trả lời ít nhất 1 câu — tránh student submit trắng
+    rồi bị fail 0% (trải nghiệm tệ và không có giá trị đánh giá).
+    """
     test_session_id: str
-    answers: dict[int, str]  # slot_index -> selected_answer
+    answers: dict[int, str] = Field(min_length=1)
 
 
 class ChapterTestSubmitResponse(BaseModel):

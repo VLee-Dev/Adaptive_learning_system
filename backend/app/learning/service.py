@@ -100,18 +100,25 @@ def submit_practice_answer(
     # Check if answer is correct
     is_correct = selected_answer == question.correct_answer
 
-    # Create attempt record
+    # B42: Tạo attempt + update mastery trong CÙNG 1 transaction.
+    # Trước đây create_attempt() và update_mastery_after_answer() mỗi cái
+    # commit riêng → nếu cái sau fail, attempt rỗng vẫn được lưu → data sai.
     attempt = Attempt(
         user_id=user_id,
         question_id=question_id,
         topic_id=topic_id,
         selected_answer=selected_answer,
-        is_correct=is_correct
+        is_correct=is_correct,
     )
-    create_attempt(db, attempt)
+    db.add(attempt)
 
-    # Update mastery using BKT
+    # Update mastery using BKT (cùng transaction)
     updated_mastery = update_mastery_after_answer(db, user_id, topic_id, is_correct)
+
+    # Commit duy nhất cho cả attempt + mastery update
+    db.commit()
+    db.refresh(updated_mastery)
+    db.refresh(attempt)
 
     # Get next question if practice should continue
     next_question = None

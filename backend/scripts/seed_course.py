@@ -9,7 +9,8 @@ What it does:
 - Logs in as admin (admin@adaptive.com / Admin@123)
 - Creates 1 course: "Tiếng Anh Cơ Bản (A1-A2)"
 - Creates 4 chapters; each chapter has 4 topics; each topic gets 10 practice
-  questions (4 L1 + 3 L2 + 3 L3) and a default practice config
+  questions (4 L1 + 3 L2 + 3 L3)
+- Practice config đã bị xoá (B1+B8 cleanup), thresholds hardcode trong service.
 - Creates a 10-question final test for each chapter (one pool, one slot)
 - Skips resources whose name already exists (idempotent re-runs)
 """
@@ -164,25 +165,11 @@ def main():
                     "level": level,
                 }, token)
                 added += 1
-            print(f"                added {added} practice question(s)")
-            total_practice += added
+                print(f"                added {added} practice question(s)")
+                total_practice += added
 
-            # Practice config
-            try:
-                get(f"/admin/practice-config/{topic['id']}", token)
-                print(f"                practice config exists - skip")
-            except RuntimeError:
-                post(f"/admin/practice-config/{topic['id']}", {
-                    "questions_per_session": 5,
-                    "starting_level": 1,
-                    "level_1_questions": 2,
-                    "level_2_questions": 2,
-                    "level_3_questions": 1,
-                    "level_up_mastery": 0.65,
-                    "completion_mastery": 0.85,
-                    "review_mastery": 0.4,
-                }, token)
-                print(f"                created practice config")
+            # NOTE: practice config đã bị xoá (B1+B8). BKT thresholds hardcode trong
+            # mastery/service.py, không cần tạo config theo topic nữa.
 
         # ---- Final test for the chapter ----
         print(f"  [final-test] chapter id={chapter['id']}")

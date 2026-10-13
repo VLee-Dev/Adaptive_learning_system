@@ -70,17 +70,7 @@ export const finalTestAdminGet = {
     api.post<FinalTest>(`/admin/chapters/${chapterId}/final-test`, data).then((r) => r.data),
 }
 
-// ---------- Practice Config ----------
-export const practiceConfigAdminGet = {
-  get: (topicId: number) =>
-    api.get<PracticeConfig>(`/admin/practice-config/${topicId}`).then((r) => r.data),
-  create: (topicId: number, data: PracticeConfigCreate) =>
-    api.post<PracticeConfig>(`/admin/practice-config/${topicId}`, data).then((r) => r.data),
-  update: (topicId: number, data: PracticeConfigUpdate) =>
-    api.patch<PracticeConfig>(`/admin/practice-config/${topicId}`, data).then((r) => r.data),
-  remove: (topicId: number) =>
-    api.delete(`/admin/practice-config/${topicId}`).then(() => undefined),
-}
+// NOTE: Practice config đã bị xoá (B1+B8). BKT thresholds hardcode BE.
 
 // =========================================================================
 // Type definitions (mirror backend Pydantic schemas)
@@ -90,6 +80,7 @@ export interface Course {
   id: number
   name: string
   description: string | null
+  image_url: string | null
   is_published: boolean
   created_at: string
 }
@@ -97,12 +88,14 @@ export interface Course {
 export interface CourseCreate {
   name: string
   description?: string
+  image_url?: string | null
   is_published?: boolean
 }
 
 export interface CourseUpdate {
   name?: string
   description?: string
+  image_url?: string | null
   is_published?: boolean
 }
 
@@ -237,43 +230,4 @@ export interface FinalTestCreate {
   max_attempts?: number | null
 }
 
-export interface PracticeConfig {
-  id: number
-  topic_id: number
-  questions_per_session: number
-  starting_level: number
-  level_1_questions: number
-  level_2_questions: number
-  level_3_questions: number
-  level_up_mastery: number
-  completion_mastery: number
-  review_mastery: number
-  max_attempts: number | null
-  review_limit: number | null
-}
-
-export interface PracticeConfigCreate {
-  questions_per_session?: number
-  starting_level?: number
-  level_1_questions?: number
-  level_2_questions?: number
-  level_3_questions?: number
-  level_up_mastery?: number
-  completion_mastery?: number
-  review_mastery?: number
-  max_attempts?: number | null
-  review_limit?: number | null
-}
-
-export interface PracticeConfigUpdate {
-  questions_per_session?: number
-  starting_level?: number
-  level_1_questions?: number
-  level_2_questions?: number
-  level_3_questions?: number
-  level_up_mastery?: number
-  completion_mastery?: number
-  review_mastery?: number
-  max_attempts?: number | null
-  review_limit?: number | null
-}
+// NOTE: PracticeConfig đã xoá (B1+B8). BKT thresholds hardcode BE.

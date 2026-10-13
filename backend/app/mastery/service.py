@@ -5,11 +5,12 @@ from app.mastery.model import TopicMastery
 from app.topics.model import Topic
 
 # ===== HARDCODED BKT THRESHOLDS (không cho admin chỉnh sửa) =====
-QUESTIONS_PER_SESSION = 8      # Tăng từ 5 → 8 để có thêm evidence
-LEVEL_UP_MASTERY = 0.75         # Tăng từ 0.65 → 0.75 để khó lên level hơn
-COMPLETION_MASTERY = 0.90       # Tăng từ 0.85 → 0.90 để khó pass hơn
-REVIEW_MASTERY = 0.50           # Tăng từ 0.4 → 0.5 để dễ trigger review hơn
-STARTING_LEVEL = 1              # Luôn bắt đầu từ level 1
+# Chốt ngày 2026-10-13 (B1+B8 cleanup). Tìm ngưỡng ổn trong quá trình dùng thật.
+QUESTIONS_PER_SESSION = 8
+LEVEL_UP_MASTERY = 0.85        # Cao = khó lên level → học kỹ mới lên
+COMPLETION_MASTERY = 0.90      # Cao = khó hoàn thành topic → chắc tay
+REVIEW_MASTERY = 0.30          # Thấp = dễ trigger review khi mastery giảm
+STARTING_LEVEL = 1             # Luôn bắt đầu từ level 1
 
 
 def calculate_bkt_update(
@@ -138,7 +139,9 @@ def update_mastery_after_answer(
     else:
         mastery.status = "in_progress"
 
-    db.commit()
+    # B42: KHÔNG commit ở đây. Caller (learning.service.submit_practice_answer)
+    # sẽ commit cùng với attempt trong 1 transaction duy nhất.
+    db.flush()
     db.refresh(mastery)
 
     return mastery

@@ -17,6 +17,8 @@ class CourseUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = None
     is_published: bool | None = None
+    is_archived: bool | None = None
+    image_url: str | None = Field(default=None, max_length=512)
 
 
 class CourseAdminResponse(BaseModel):
@@ -26,6 +28,7 @@ class CourseAdminResponse(BaseModel):
     name: str
     description: str | None
     is_published: bool
+    is_archived: bool
     created_at: datetime
 
 
@@ -68,6 +71,8 @@ class TopicUpdate(BaseModel):
     description: str | None = None
     type: TopicType | None = None
     order_index: int | None = Field(default=None, ge=1)
+    is_active: bool | None = None
+    is_archived: bool | None = None
 
 
 class TopicAdminResponse(BaseModel):
@@ -83,6 +88,8 @@ class TopicAdminResponse(BaseModel):
     p_transit: float
     p_slip: float
     p_guess: float
+    is_active: bool
+    is_archived: bool
     created_at: datetime
 
 
@@ -210,44 +217,6 @@ class TestSlotResponse(BaseModel):
     is_required: bool
 
 
-class PracticeConfigCreate(BaseModel):
-    questions_per_session: int = Field(default=5, ge=1)
-    starting_level: int = Field(default=1, ge=1, le=3)
-    level_1_questions: int = Field(default=0, ge=0)
-    level_2_questions: int = Field(default=5, ge=0)
-    level_3_questions: int = Field(default=0, ge=0)
-    level_up_mastery: float = Field(default=0.65, ge=0, le=1)
-    completion_mastery: float = Field(default=0.85, ge=0, le=1)
-    review_mastery: float = Field(default=0.4, ge=0, le=1)
-    max_attempts: int | None = Field(default=None, ge=1)
-    review_limit: int | None = Field(default=None, ge=1)
-
-
-class PracticeConfigUpdate(BaseModel):
-    questions_per_session: int | None = Field(default=None, ge=1)
-    starting_level: int | None = Field(default=None, ge=1, le=3)
-    level_1_questions: int | None = Field(default=None, ge=0)
-    level_2_questions: int | None = Field(default=None, ge=0)
-    level_3_questions: int | None = Field(default=None, ge=0)
-    level_up_mastery: float | None = Field(default=None, ge=0, le=1)
-    completion_mastery: float | None = Field(default=None, ge=0, le=1)
-    review_mastery: float | None = Field(default=None, ge=0, le=1)
-    max_attempts: int | None = Field(default=None, ge=1)
-    review_limit: int | None = Field(default=None, ge=1)
-
-
-class PracticeConfigResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    topic_id: int
-    questions_per_session: int
-    starting_level: int
-    level_1_questions: int
-    level_2_questions: int
-    level_3_questions: int
-    level_up_mastery: float
-    completion_mastery: float
-    review_mastery: float
-    max_attempts: int | None
-    review_limit: int | None
+# NOTE: PracticeConfigCreate/Update/Response đã xoá (cleanup B1+B8).
+# BKT thresholds + level config hiện hardcode trong `mastery/service.py`.
+# Sau này nếu cần per-topic config, sẽ tạo lại schema phù hợp.

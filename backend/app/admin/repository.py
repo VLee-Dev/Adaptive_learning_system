@@ -146,10 +146,6 @@ def save_slot(db: Session, slot: ChapterTestSlot) -> ChapterTestSlot:
     return slot
 
 
-def get_question(db: Session, question_id: int) -> Question | None:
-    return db.get(Question, question_id)
-
-
 def add_question_to_pool(db: Session, pool: ChapterTestPool, question: Question) -> ChapterTestPool:
     pool.questions.append(question)
     db.commit()

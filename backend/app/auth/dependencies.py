@@ -29,4 +29,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     user = db.get(User, user_id)
     if user is None:
         raise credentials_error
+    if not user.is_active:
+        # Tài khoản đã bị vô hiệu hoá (admin set is_active=False).
+        # Coi như 401 để client tự logout và xoá token.
+        raise credentials_error
     return user

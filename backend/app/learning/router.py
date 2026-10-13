@@ -26,9 +26,45 @@ from app.learning.chapter_test_service import (
     submit_chapter_test,
     get_chapter_completion_status
 )
+from app.enrollments.repository import list_enrollments_for_user
 from app.users.model import User
+from datetime import datetime
 
 router = APIRouter(prefix="/learning", tags=["learning"])
+
+
+@router.get("/enrollments")
+def list_enrollments(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """B32: List courses the student is enrolled in, with progress.
+
+    Response shape (FE expects):
+    [
+      {
+        "course_id": int,
+        "course_name": str,
+        "progress": float,        # 0–100, % chapter completed
+        "completed": bool,        # course_completions record exists
+        "last_accessed": str|null # ISO 8601 UTC, từ LearningEvent mới nhất
+      },
+      ...
+    ]
+    """
+    rows = list_enrollments_for_user(db, current_user.id)
+    return [
+        {
+            "course_id": r["course_id"],
+            "course_name": r["course_name"],
+            "progress": round(r["progress"], 2),
+            "completed": r["completed"],
+            "last_accessed": r["last_accessed"].isoformat()
+                if isinstance(r["last_accessed"], datetime)
+                else r["last_accessed"],
+        }
+        for r in rows
+    ]
 
 
 @router.get("/topics/{topic_id}/mastery", response_model=TopicMasteryResponse)

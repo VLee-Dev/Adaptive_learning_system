@@ -1,3 +1,6 @@
+// B45: Tạm thời 1 form cho cả student + admin. Sau này sẽ tách 2 form
+// riêng: StudentProfilePage (xem progress, streak, ...) vs AdminProfilePage
+// (xem stats, audit log, ...).
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import api, { toApiError } from '@/lib/api'
@@ -7,6 +10,7 @@ export default function ProfilePage() {
   const user = useAuthStore((s) => s.user)
 
   const [newPassword, setNewPassword] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,9 +56,13 @@ export default function ProfilePage() {
 
     setSubmitting(true)
     try {
-      await api.patch('/auth/me', { password: newPassword })
+      await api.patch('/auth/me', {
+        password: newPassword,
+        current_password: currentPassword,
+      })
       toast.success('Đổi mật khẩu thành công.')
       setNewPassword('')
+      setCurrentPassword('')
       setConfirmPassword('')
     } catch (e) {
       setError(toApiError(e).detail)
@@ -123,6 +131,20 @@ export default function ProfilePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="block text-sm font-semibold text-stone-700 mb-1">
+              Mật khẩu hiện tại *
+            </label>
+            <input
+              type="password"
+              required
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              autoComplete="current-password"
+              className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none"
+              placeholder="Nhập mật khẩu hiện tại"
+            />
+          </div>
           <div>
             <label className="block text-sm font-semibold text-stone-700 mb-1">
               Mật khẩu mới *

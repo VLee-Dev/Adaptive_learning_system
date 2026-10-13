@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
 from app.auth.schemas import LoginRequest, ProfileUpdate, RegisterRequest, TokenResponse, UserResponse
-from app.auth.service import authenticate_user, create_access_token, create_user, update_user_profile
+from app.auth.service import authenticate_user, create_access_token
+from app.users.service import create_user, update_user_profile
 from core.database import get_db
 from app.users.model import User
 
@@ -36,5 +37,21 @@ def me(current_user: User = Depends(get_current_user)):
 
 
 @router.patch("/me", response_model=UserResponse)
-def update_profile(payload: ProfileUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return update_user_profile(db, current_user, payload.full_name, payload.password)
+def update_profile(
+    payload: ProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    try:
+        return update_user_profile(
+            db,
+            current_user,
+            payload.full_name,
+            payload.password,
+            payload.current_password,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc

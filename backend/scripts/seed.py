@@ -7,7 +7,7 @@ from app.chapters.model import Chapter
 from app.topics.model import Topic, TopicType
 from app.lessons.model import Lesson
 from app.questions.model import Question, QuestionPurpose, QuestionFormat
-from app.mastery.model import PracticeConfiguration
+# NOTE: PracticeConfiguration đã xoá (B1+B8). BKT thresholds hardcode trong service.
 from app.chapter_tests.model import ChapterFinalTest, ChapterTestPool, ChapterTestSlot
 from app.users.model import User, UserRole
 from core.database import SessionLocal
@@ -72,21 +72,8 @@ def seed_sample_course(db: Session):
         p_guess=0.25
     )
     db.add(topic1_1)
+    # NOTE: PracticeConfiguration đã xoá (B1+B8). BKT thresholds hardcode trong service.
     db.flush()
-
-    # Create Practice Configuration for Topic 1.1
-    practice_config1_1 = PracticeConfiguration(
-        topic_id=topic1_1.id,
-        questions_per_session=5,
-        starting_level=1,
-        level_1_questions=3,
-        level_2_questions=5,
-        level_3_questions=3,
-        level_up_mastery=0.65,
-        completion_mastery=0.85,
-        review_mastery=0.4
-    )
-    db.add(practice_config1_1)
 
     # Create Lesson for Topic 1.1
     lesson1_1_1 = Lesson(
@@ -227,21 +214,8 @@ The present simple tense is used to:
         p_guess=0.25
     )
     db.add(topic1_2)
+    # NOTE: PracticeConfiguration đã xoá (B1+B8). BKT thresholds hardcode trong service.
     db.flush()
-
-    # Practice config for Topic 1.2
-    practice_config1_2 = PracticeConfiguration(
-        topic_id=topic1_2.id,
-        questions_per_session=5,
-        starting_level=1,
-        level_1_questions=3,
-        level_2_questions=5,
-        level_3_questions=3,
-        level_up_mastery=0.65,
-        completion_mastery=0.85,
-        review_mastery=0.4
-    )
-    db.add(practice_config1_2)
 
     # Lesson for Topic 1.2
     lesson1_2_1 = Lesson(

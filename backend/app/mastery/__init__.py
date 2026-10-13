@@ -1,3 +1,3 @@
-from app.mastery.model import PracticeConfiguration, TopicMastery
+from app.mastery.model import TopicMastery
 
-__all__ = ["PracticeConfiguration", "TopicMastery"]
+__all__ = ["TopicMastery"]

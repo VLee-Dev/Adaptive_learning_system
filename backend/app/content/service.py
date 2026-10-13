@@ -5,16 +5,30 @@ from app.content.repository import (
     list_chapters_by_course, list_lessons_by_topic, list_published_courses,
     list_topics_by_chapter,
 )
+from app.enrollments.model import CourseEnrollment
+from sqlalchemy import select, func
+
+
+def _enrollment_count(db: Session, course_id: int) -> int:
+    """Count active enrollments for a course."""
+    return db.execute(
+        select(func.count(CourseEnrollment.id))
+        .where(CourseEnrollment.course_id == course_id)
+    ).scalar() or 0
 
 
 def get_public_courses(db: Session):
-    return list_published_courses(db)
+    courses = list_published_courses(db)
+    for c in courses:
+        c.enrollment_count = _enrollment_count(db, c.id)
+    return courses
 
 
 def get_course_detail(db: Session, course_id: int):
     course = get_course_by_id(db, course_id)
     if course is None:
         raise LookupError("Course not found")
+    course.enrollment_count = _enrollment_count(db, course.id)
     return course
 
 

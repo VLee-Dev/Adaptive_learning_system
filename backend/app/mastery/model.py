@@ -28,20 +28,7 @@ class TopicMastery(Base):
     topic: Mapped["Topic"] = relationship(back_populates="mastery_records")
 
 
-class PracticeConfiguration(Base):
-    __tablename__ = "practice_configurations"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id", ondelete="CASCADE"), nullable=False, unique=True)
-    questions_per_session: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
-    starting_level: Mapped[int] = mapped_column(Integer, default=2, nullable=False)
-    level_1_questions: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    level_2_questions: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
-    level_3_questions: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    level_up_mastery: Mapped[float] = mapped_column(Float, default=0.65, nullable=False)
-    completion_mastery: Mapped[float] = mapped_column(Float, default=0.85, nullable=False)
-    review_mastery: Mapped[float] = mapped_column(Float, default=0.4, nullable=False)
-    max_attempts: Mapped[int | None] = mapped_column(Integer)
-    review_limit: Mapped[int | None] = mapped_column(Integer)
-
-    topic: Mapped["Topic"] = relationship(back_populates="practice_configuration")
+# NOTE: PracticeConfiguration đã bị xoá (cleanup B1+B8).
+# Lý do: BKT thresholds + level config hardcode trong `mastery/service.py` cho
+# gọn, dễ tìm ngưỡng ổn. Sau này nếu cần per-topic config, sẽ tạo lại bảng mới
+# với schema phù hợp.

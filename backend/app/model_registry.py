@@ -5,7 +5,7 @@ from app.completions.model import ChapterCompletion, CourseCompletion
 from app.courses.model import Course
 from app.enrollments.model import CourseEnrollment
 from app.lessons.model import Lesson
-from app.mastery.model import PracticeConfiguration, TopicMastery
+from app.mastery.model import TopicMastery
 from app.questions.model import Question
 from app.recommendations.model import Recommendation
 from app.stimuli.model import Stimulus
@@ -19,6 +19,6 @@ from app.users.model import User
 __all__ = [
     "Attempt", "Chapter", "ChapterCompletion", "ChapterFinalTest",
     "ChapterTestPool", "ChapterTestSlot", "Course", "CourseCompletion",
-    "CourseEnrollment", "LearningEvent", "Lesson", "PracticeConfiguration",
+    "CourseEnrollment", "LearningEvent", "Lesson",
     "Question", "Recommendation", "Stimulus", "Topic", "TopicMastery", "User",
 ]

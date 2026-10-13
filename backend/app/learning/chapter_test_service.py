@@ -20,6 +20,8 @@ from app.learning.chapter_test_schemas import (
     TestAnswerResult,
     ChapterCompletionResponse
 )
+from app.mastery.model import TopicMastery
+from app.topics.model import Topic
 
 # In-memory storage for test sessions (should be Redis in production)
 _test_sessions: dict[str, dict] = {}
@@ -41,6 +43,29 @@ def start_chapter_test(db: Session, user_id: int, chapter_id: int) -> ChapterTes
     chapter = db.query(Chapter).filter(Chapter.id == chapter_id).first()
     if chapter is None:
         raise LookupError("Chapter not found")
+
+    # PREREQUISITE CHECK (B5): student phải enroll course của chapter này
+    from app.enrollments.model import CourseEnrollment
+    enrolled = db.query(CourseEnrollment).filter(
+        CourseEnrollment.user_id == user_id,
+        CourseEnrollment.course_id == chapter.course_id,
+    ).first()
+    if enrolled is None:
+        raise ValueError("You must enroll in this course before taking the final test")
+
+    # PREREQUISITE CHECK (B5): tất cả topic trong chapter phải completed
+    incomplete = db.query(Topic).outerjoin(
+        TopicMastery,
+        (TopicMastery.topic_id == Topic.id) & (TopicMastery.user_id == user_id),
+    ).filter(
+        Topic.chapter_id == chapter_id,
+        (TopicMastery.id.is_(None)) | (TopicMastery.status != "completed"),
+    ).count()
+    if incomplete > 0:
+        raise ValueError(
+            f"Cannot start chapter test: {incomplete} topic(s) not yet completed. "
+            "Finish all practice sessions first."
+        )
 
     # Get test configuration
     test = get_chapter_test(db, chapter_id)
@@ -160,12 +185,15 @@ def submit_chapter_test(
                 test_score_percent=score_percent
             )
             create_chapter_completion(db, completion)
-            chapter_completed = True
 
             # Check if course is completed (all chapters done)
             chapter = db.query(Chapter).filter(Chapter.id == chapter_id).first()
             if chapter:
                 check_and_complete_course(db, user_id, chapter.course_id)
+
+        # chapter_completed = True khi đã pass (kể cả record đã tồn tại từ trước)
+        # để FE biết chapter này đã hoàn thành, dù lần này không tạo record mới.
+        chapter_completed = True
 
     # Clean up session
     del _test_sessions[session_id]

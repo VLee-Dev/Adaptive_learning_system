@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 
 class RegisterRequest(BaseModel):
@@ -28,5 +28,17 @@ class TokenResponse(BaseModel):
 
 
 class ProfileUpdate(BaseModel):
+    """PATCH /auth/me — update profile.
+
+    B47: nếu đổi password thì bắt buộc gửi kèm `current_password` để xác minh
+    danh tính (tránh attacker cướp token rồi đổi password khoá user thật).
+    """
     full_name: str | None = Field(default=None, max_length=255)
     password: str | None = Field(default=None, min_length=8, max_length=128)
+    current_password: str | None = None
+
+    @model_validator(mode="after")
+    def check_current_password_when_changing(self):
+        if self.password is not None and not self.current_password:
+            raise ValueError("current_password is required when changing password")
+        return self

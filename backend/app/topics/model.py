@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum as SqlEnum, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Enum as SqlEnum, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
@@ -10,7 +10,7 @@ from core.database import Base
 if TYPE_CHECKING:
     from app.chapters.model import Chapter
     from app.lessons.model import Lesson
-    from app.mastery.model import PracticeConfiguration, TopicMastery
+    from app.mastery.model import TopicMastery
     from app.questions.model import Question
     from app.stimuli.model import Stimulus
 
@@ -35,11 +35,12 @@ class Topic(Base):
     p_transit: Mapped[float] = mapped_column(Float, default=0.2, nullable=False)
     p_slip: Mapped[float] = mapped_column(Float, default=0.1, nullable=False)
     p_guess: Mapped[float] = mapped_column(Float, default=0.25, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_archived: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     chapter: Mapped["Chapter"] = relationship(back_populates="topics")
     lessons: Mapped[list["Lesson"]] = relationship(back_populates="topic", cascade="all, delete-orphan", order_by="Lesson.order_index")
     questions: Mapped[list["Question"]] = relationship(back_populates="topic", cascade="all, delete-orphan")
     stimuli: Mapped[list["Stimulus"]] = relationship(back_populates="topic", cascade="all, delete-orphan")
-    practice_configuration: Mapped["PracticeConfiguration | None"] = relationship(back_populates="topic", uselist=False, cascade="all, delete-orphan")
     mastery_records: Mapped[list["TopicMastery"]] = relationship(back_populates="topic")
