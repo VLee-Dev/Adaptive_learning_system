@@ -75,11 +75,6 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - **LoginPage (A2)**: Theo mẫu Neko (background mèo + form bên phải). Gọi `useAuthStore.login()`. Có thêm: redirect về trang gốc nếu user bị ProtectedRoute đẩy qua, eye toggle cho password, remember me.
 - **RegisterPage (A3)**: Theo mẫu Neko. Dùng `react-hook-form` + `zod` validation. Fields: họ tên, email, password, xác nhận password, đồng ý điều khoản. Sau khi đăng ký thành công → tự động login → navigate về dashboard.
 
-**Kiến thức mới cần nhớ (xem `PROJECT_KNOWLEDGE.md` Section 10):**
-- `react-hot-toast`: import `toast` từ thư viện, dùng `toast.success/error/loading`. Mount `<Toaster />` ở `main.tsx` để toast hiển thị toàn cục.
-- React Hook Form + Zod: `useForm({ resolver: zodResolver(schema) })` → tự động validate, `register('fieldName')` để bind input, `formState.errors.fieldName` để hiển thị lỗi.
-- Zod `.refine((v) => v === true, { message })` thay cho `z.literal(true, { errorMap })` ở phiên bản mới.
-- 2 Layout pattern: `bare` cho full-bleed (không header) và layout thường cho app - tách ở `App.tsx` bằng 2 `<Layout>` block.
 
 ### [Commit cdd9067] Landing page redesign + Auth flow + ErrorBoundary
 
