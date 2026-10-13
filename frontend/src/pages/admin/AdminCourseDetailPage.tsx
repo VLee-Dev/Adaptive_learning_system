@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { chapterAdminGet, courseAdminGet, type Chapter, type Course } from '@/lib/adminApi'
-import { toApiError } from '@/lib/api'
+import ImageUploader from '@/components/ImageUploader'
+import { chapterAdminGet, courseAdminGet } from '@/lib/adminApi'
+import type { Chapter, Course } from '@/types/admin'
+import { resolveImageUrl, toApiError } from '@/lib/api'
 
 export default function AdminCourseDetailPage() {
   const { courseId } = useParams<{ courseId: string }>()
@@ -12,6 +14,14 @@ export default function AdminCourseDetailPage() {
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Course-level edit (image cover, name, description, publish).
+  const [editingCourse, setEditingCourse] = useState(false)
+  const [courseEditName, setCourseEditName] = useState('')
+  const [courseEditDescription, setCourseEditDescription] = useState('')
+  const [courseEditImageUrl, setCourseEditImageUrl] = useState<string | null>(null)
+  const [courseEditPublish, setCourseEditPublish] = useState(false)
+  const [savingCourse, setSavingCourse] = useState(false)
 
   // create form
   const [title, setTitle] = useState('')
@@ -88,6 +98,35 @@ export default function AdminCourseDetailPage() {
     }
   }
 
+  const startCourseEdit = () => {
+    if (!course) return
+    setCourseEditName(course.name)
+    setCourseEditDescription(course.description ?? '')
+    setCourseEditImageUrl(course.image_url ?? null)
+    setCourseEditPublish(course.is_published)
+    setEditingCourse(true)
+  }
+
+  const saveCourseEdit = async () => {
+    if (!course) return
+    setSavingCourse(true)
+    setError(null)
+    try {
+      const updated = await courseAdminGet.update(course.id, {
+        name: courseEditName.trim(),
+        description: courseEditDescription.trim() || undefined,
+        image_url: courseEditImageUrl ?? undefined,
+        is_published: courseEditPublish,
+      })
+      setCourse(updated)
+      setEditingCourse(false)
+    } catch (e) {
+      setError(toApiError(e).detail)
+    } finally {
+      setSavingCourse(false)
+    }
+  }
+
   const handleDelete = async (id: number, title: string) => {
     if (
       !confirm(
@@ -130,22 +169,104 @@ export default function AdminCourseDetailPage() {
         </Link>
       </div>
 
-      <div className="mb-6 bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
-        <div className="flex items-start justify-between">
+      <div className="mb-6 bg-white border border-stone-200 rounded-2xl p-5 shadow-sm space-y-4">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-stone-800">{course.name}</h1>
             <p className="text-sm text-stone-500 mt-1">{course.description ?? '—'}</p>
           </div>
-          <span
-            className={`text-xs px-2 py-1 rounded-full font-semibold ${
-              course.is_published
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-stone-200 text-stone-600'
-            }`}
-          >
-            {course.is_published ? 'Đã xuất bản' : 'Bản nháp'}
-          </span>
+          <div className="flex flex-col items-end gap-2">
+            <span
+              className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                course.is_published
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-stone-200 text-stone-600'
+              }`}
+            >
+              {course.is_published ? 'Đã xuất bản' : 'Bản nháp'}
+            </span>
+            <button
+              type="button"
+              onClick={startCourseEdit}
+              className="text-xs px-3 py-1.5 rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200"
+            >
+              Sửa thông tin
+            </button>
+          </div>
         </div>
+
+        {/* Cover image preview (read-only, edit below). */}
+        <div className="h-40 rounded-xl overflow-hidden bg-gradient-to-br from-orange-200 to-orange-400 relative">
+          {resolveImageUrl(course.image_url) ? (
+            <img
+              src={resolveImageUrl(course.image_url) ?? ''}
+              alt={course.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-5xl">📖</div>
+          )}
+        </div>
+
+        {/* Inline editor for the course itself. */}
+        {editingCourse && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+            <h3 className="font-semibold text-stone-700">Sửa thông tin khóa học</h3>
+            <div>
+              <label className="block text-sm font-semibold text-stone-700 mb-1">Tên *</label>
+              <input
+                value={courseEditName}
+                onChange={(e) => setCourseEditName(e.target.value)}
+                className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-stone-700 mb-1">Mô tả</label>
+              <textarea
+                value={courseEditDescription}
+                onChange={(e) => setCourseEditDescription(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none"
+              />
+            </div>
+            <ImageUploader
+              value={courseEditImageUrl}
+              onChange={setCourseEditImageUrl}
+              label="Ảnh bìa"
+              disabled={savingCourse}
+            />
+            <label className="flex items-center gap-2 text-sm text-stone-700">
+              <input
+                type="checkbox"
+                checked={courseEditPublish}
+                onChange={(e) => setCourseEditPublish(e.target.checked)}
+                className="rounded"
+              />
+              Xuất bản
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={saveCourseEdit}
+                disabled={savingCourse}
+                className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {savingCourse ? 'Đang lưu…' : 'Lưu'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingCourse(false)}
+                disabled={savingCourse}
+                className="px-4 py-2 rounded-xl bg-stone-200 text-stone-700 hover:bg-stone-300"
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (

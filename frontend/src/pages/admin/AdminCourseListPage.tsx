@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { courseAdminGet, type Course } from '@/lib/adminApi'
+import ImageUploader from '@/components/ImageUploader'
+import { courseAdminGet } from '@/lib/adminApi'
+import type { Course } from '@/types/admin'
 import { toApiError } from '@/lib/api'
 
 export default function AdminCourseListPage() {
@@ -12,6 +14,7 @@ export default function AdminCourseListPage() {
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [publish, setPublish] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
@@ -19,6 +22,7 @@ export default function AdminCourseListPage() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editName, setEditName] = useState('')
   const [editDescription, setEditDescription] = useState('')
+  const [editImageUrl, setEditImageUrl] = useState<string | null>(null)
   const [editPublish, setEditPublish] = useState(false)
 
   const load = async () => {
@@ -44,10 +48,12 @@ export default function AdminCourseListPage() {
       await courseAdminGet.create({
         name: name.trim(),
         description: description.trim() || undefined,
+        image_url: imageUrl ?? undefined,
         is_published: publish,
       })
       setName('')
       setDescription('')
+      setImageUrl(null)
       setPublish(false)
       setShowForm(false)
       await load()
@@ -62,6 +68,7 @@ export default function AdminCourseListPage() {
     setEditingId(c.id)
     setEditName(c.name)
     setEditDescription(c.description ?? '')
+    setEditImageUrl(c.image_url ?? null)
     setEditPublish(c.is_published)
   }
 
@@ -71,6 +78,7 @@ export default function AdminCourseListPage() {
       await courseAdminGet.update(id, {
         name: editName.trim(),
         description: editDescription.trim() || undefined,
+        image_url: editImageUrl ?? undefined,
         is_published: editPublish,
       })
       setEditingId(null)
@@ -137,6 +145,12 @@ export default function AdminCourseListPage() {
               placeholder="Mô tả ngắn về khóa học"
             />
           </div>
+          <ImageUploader
+            value={imageUrl}
+            onChange={setImageUrl}
+            label="Ảnh bìa (tải lên)"
+            disabled={submitting}
+          />
           <label className="flex items-center gap-2 text-sm text-stone-700">
             <input
               type="checkbox"
@@ -198,6 +212,13 @@ export default function AdminCourseListPage() {
                         rows={2}
                         className="w-full mt-1 px-2 py-1 border border-stone-300 rounded"
                       />
+                      <div className="mt-2">
+                        <ImageUploader
+                          value={editImageUrl}
+                          onChange={setEditImageUrl}
+                          label="Ảnh bìa"
+                        />
+                      </div>
                     </td>
                     <td className="px-4 py-3 align-top">
                       <label className="flex items-center gap-2 text-xs">

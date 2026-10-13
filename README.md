@@ -76,7 +76,7 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - **RegisterPage (A3)**: Theo mẫu Neko. Dùng `react-hook-form` + `zod` validation. Fields: họ tên, email, password, xác nhận password, đồng ý điều khoản. Sau khi đăng ký thành công → tự động login → navigate về dashboard.
 
 
-### [Commit cdd9067] Landing page redesign + Auth flow + ErrorBoundary
+### 06/10/2026 - Landing page redesign + Auth flow + ErrorBoundary
 
 **Frontend:**
 - Redesign toàn bộ Landing/Login/Register pages với theme Neko mới.
@@ -85,7 +85,7 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - Cải thiện UX với toast notifications và smooth transitions.
 - Refactor layout structure cho rõ ràng hơn.
 
-### [Commit 4f5f330] Admin & Student Frontend - HOÀN CHỈNH
+### 07/10/2026 - Admin & Student Frontend - HOÀN CHỈNH
 
 **Admin Pages (9 trang):**
 - **AdminDashboardPage**: Tổng quan với stats (tổng khóa học, đã xuất bản, tổng chương).
@@ -123,24 +123,63 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - Toast notifications cho user feedback.
 
 
+### 13/10/2026 - Course cover image upload
+
+**Backend (mới):**
+- Package `app/uploads/` với endpoint `POST /uploads` (admin-only, `multipart/form-data`).
+  - Chỉ chấp nhận `image/jpeg|png|webp|gif`, giới hạn 5 MB.
+  - Lưu file vào `backend/static/uploads/<random_token>.<ext>`, trả về `{url, filename, size}`.
+- `app/main.py`: mount `StaticFiles(directory="backend/static")` tại `/static` để phục vụ ảnh đã upload.
+- Migration `f1a2b3c4d5e6_add_image_url_to_courses`: thêm cột `image_url VARCHAR(512)` cho bảng `courses`.
+
+**Frontend:**
+- Component dùng chung `frontend/src/components/ImageUploader.tsx`: file input + preview 32x20 + nút "Xóa ảnh" + progress + error inline.
+- `frontend/src/lib/api.ts`:
+  - Thêm `uploadApi.uploadImage(file)` (FormData POST `/uploads`).
+  - Helper `resolveImageUrl(url)`: relative path `/static/...` → `http://localhost:8000/static/...` để ảnh hiển thị được khi Vite (5173) và FastAPI (8000) khác origin trong dev.
+- `AdminCourseListPage`:
+  - Form **tạo khóa học** đổi input URL thành `ImageUploader`.
+  - Hàng **sửa** trong bảng cũng dùng `ImageUploader` (sửa tại chỗ).
+- `AdminCourseDetailPage`:
+  - Header course hiển thị ảnh bìa (read-only) + nút **Sửa thông tin**.
+  - Panel sửa inline (mở/đóng) cho phép đổi tên, mô tả, ảnh bìa, trạng thái xuất bản.
+- `StudentCourseCatalogPage` & `StudentCourseDetailPage`: dùng `resolveImageUrl()` ở `<img src>` để ảnh upload hiển thị đúng.
+
+**Cách dùng:**
+1. Vào `/admin/courses` → **+ Tạo khóa học** → mục "Ảnh bìa (tải lên)" chọn file → ảnh upload ngay → bấm **Tạo**.
+2. Hoặc vào `/admin/courses/<id>` → bấm **Sửa thông tin** → đổi ảnh bìa → **Lưu**.
+3. Student ở `/student/courses` thấy ảnh bìa mới từ backend.
+
+**Test đã chạy end-to-end:**
+- Upload `test_upload.png` (516 bytes) → trả về `{"url":"/static/uploads/<token>.png",...}`.
+- Truy cập `http://localhost:8000/static/uploads/<token>.png` → HTTP 200, `Content-Type: image/png`, đúng 516 bytes.
+- PATCH `/admin/courses/7` với `image_url` mới → public `/courses` trả về URL mới.
+
 ### Trạng thái hiện tại
 
-**Hoàn thành:** 
-- Database (20 bảng) với BKT support
-- Auth/JWT với role-based access
-- 49 API endpoints (Admin CRUD + Student learning + BKT adaptive)
-- BKT algorithm implementation
+**Hoàn thành:**
+- Database (20 bảng) với BKT support — head migration `a1b2c3d4e5f6_seed_default_admin_account`
+- Auth/JWT với role-based access (4 endpoints Auth)
+- **45 API endpoints** (Auth 4 + Content 8 + Enrollment 1 + Admin 30 + Learning 6)
+- BKT algorithm implementation (đã "harden thresholds" trong commit 3205cba)
 - Chapter test với slot/pool system
-- **Frontend hoàn chỉnh: 17+ trang (9 Admin + 8 Student + shared pages)**
+- **Frontend hoàn chỉnh: 17+ trang (3 Auth + 8 Student + 9 Admin + shared)**
 - **AdminLayout + ErrorBoundary + Toaster components**
 - **adminApi.ts với typed helpers cho tất cả endpoints**
 - **Full integration: UI ↔ API ↔ Database**
 
 
-**Chưa có:** 
-- Một số trang placeholder còn lại (HistoryPage, LearnPage, TestPage - có thể không cần thiết cho MVP)
+**Chưa có:**
+- Unit tests (`backend/tests/` chỉ có `__init__.py`)
 - Recommendation engine (planned for future)
 - Production infrastructure (Redis, logging, monitoring)
+- File top-level placeholder: `HomePage.tsx`, `HistoryPage.tsx`, `LearnPage.tsx`, `TestPage.tsx` (không dùng cho MVP)
+
+**Tài liệu kỹ thuật:**
+- `PROJECT_KNOWLEDGE.md` — Kiến thức tổng hợp, có giải thích "Tại sao cần seed" + "Tại sao CORS dùng regex"
+- `AI_CONTEXT.md` — Trạng thái ngắn gọn + nguyên tắc làm việc
+- `adaptive_learning_pipeline_spec.md` — Spec gốc
+- `backend/scripts/README_SEED.md` — Hướng dẫn 2 script seed
 
 ## Phần 2 - Hướng dẫn sử dụng dự án
 
@@ -246,7 +285,6 @@ Guest xem Course
 
 ### Phạm vi chưa có
 
-- Frontend integration với backend API.
-- Admin UI panel.
-- Recommendation engine (để sau cùng).
+- Unit tests cho BKT + API + frontend.
+- Recommendation engine.
 - Production infrastructure (Redis cho test sessions, logging, monitoring).
