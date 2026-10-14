@@ -155,17 +155,50 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - Truy cập `http://localhost:8000/static/uploads/<token>.png` → HTTP 200, `Content-Type: image/png`, đúng 516 bytes.
 - PATCH `/admin/courses/7` với `image_url` mới → public `/courses` trả về URL mới.
 
+### 14/10/2026 - Redesign Neko UI + BKT harden + Course image upload
+
+**Student experience (Neko theme redesign):**
+- Header mới `StudentHeader` (sticky, blur, search + StudyTimer + UserDropdown) — dùng chung cho mọi trang student thông qua `Layout` (homepage tự render để giữ searchAutocomplete).
+- Tách `StudyTimerBadge` + `UserDropdown` ra `components/` riêng (tái sử dụng, không còn nằm inline trong `HomepageStudent`).
+- `HomepageStudent`: greeting + primary course card + weekly streak + featured courses grid (theme Neko: cream/orange, paw watermark, landscaping background).
+- `StudentCourseCatalogPage` + `StudentCourseDetailPage`: thống nhất app bar + button quay lại về homepage.
+- Xóa các file skeleton không dùng: `BackButton`, `MasteryBar`, `SkillTreeView`, `admin/LessonForm`, `admin/QuestionForm`, `pages/LearnPage`, `pages/TestPage`, `pages/HistoryPage`, `pages/student/StudentDashboardPage` (đã được thay bằng `HomepageStudent`).
+
+**BKT + schema fixes:**
+- Thêm cột `is_active`, `is_archived` vào courses + chapters (admin có thể soft-delete/ẩn nội dung).
+- Model `Mastery` mới (`app/mastery/`): tách BKT state + attempt history + recommendation log ra package riêng, dễ test/mở rộng.
+- Harden BKT thresholds (đã có từ commit trước, giữ nguyên).
+
+**Course image upload (admin):**
+- Package `app/uploads/` + endpoint `POST /uploads` (admin-only, 5MB, jpeg/png/webp/gif).
+- `StaticFiles` mount `/static` để phục vụ ảnh.
+- `ImageUploader` component (file input + preview + progress + error).
+- Migration thêm `image_url` cho `courses`, `topics`, `lessons`, `questions`.
+- Admin: thay input URL → `ImageUploader` ở form tạo/sửa; trang detail có panel "Sửa thông tin" inline.
+- Student: `resolveImageUrl()` để hiển thị ảnh upload (Vite 5173 + FastAPI 8000 khác origin).
+
+**Backend cleanup:**
+- Xóa các script tạm (`_check_lessons.py`, `_check_users.py`, `_fix_*.py`, `_stamp_version.py`, `_verify_admin.py`).
+- `app/main.py` mount static files.
+- `app/content/service.py`: helper resolve image URL.
+
+**Frontend cleanup:**
+- `adminApi.ts`: thêm typed helpers cho upload + image URL fields.
+- `App.tsx`: route mới `/student/homepage` thay cho `/student/dashboard`.
+- `index.html`: thêm font + meta tags.
+
 ### Trạng thái hiện tại
 
-**Hoàn thành:**
-- Database (20 bảng) với BKT support — head migration `a1b2c3d4e5f6_seed_default_admin_account`
-- Auth/JWT với role-based access (4 endpoints Auth)
-- **45 API endpoints** (Auth 4 + Content 8 + Enrollment 1 + Admin 30 + Learning 6)
-- BKT algorithm implementation (đã "harden thresholds" trong commit 3205cba)
+**Hoàn thành (tính đến 14/10/2026):**
+- Database (20 bảng) với BKT support — head migration `add_is_active_and_is_archived`
+- Auth/JWT với role-based access
+- **API endpoints** (Auth + Content + Enrollment + Admin + Learning + Uploads)
+- BKT algorithm + Mastery model tách package riêng (`app/mastery/`)
 - Chapter test với slot/pool system
-- **Frontend hoàn chỉnh: 17+ trang (3 Auth + 8 Student + 9 Admin + shared)**
-- **AdminLayout + ErrorBoundary + Toaster components**
-- **adminApi.ts với typed helpers cho tất cả endpoints**
+- **Frontend hoàn chỉnh: 17+ trang (3 Auth + 8 Student + 9 Admin + shared) với Neko theme**
+- **StudentHeader + StudyTimerBadge + UserDropdown + ImageUploader + AdminLayout + ErrorBoundary + Toaster**
+- **adminApi.ts với typed helpers + upload API**
+- **Course image upload end-to-end (admin upload → static serve → student display)**
 - **Full integration: UI ↔ API ↔ Database**
 
 
@@ -173,7 +206,6 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - Unit tests (`backend/tests/` chỉ có `__init__.py`)
 - Recommendation engine (planned for future)
 - Production infrastructure (Redis, logging, monitoring)
-- File top-level placeholder: `HomePage.tsx`, `HistoryPage.tsx`, `LearnPage.tsx`, `TestPage.tsx` (không dùng cho MVP)
 
 **Tài liệu kỹ thuật:**
 - `PROJECT_KNOWLEDGE.md` — Kiến thức tổng hợp, có giải thích "Tại sao cần seed" + "Tại sao CORS dùng regex"

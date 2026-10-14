@@ -143,6 +143,9 @@ export default function AdminCourseDetailPage() {
     }
   }
 
+  // Cover image lightbox
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+
   if (loading) {
     return <div className="text-stone-500">Đang tải…</div>
   }
@@ -195,13 +198,18 @@ export default function AdminCourseDetailPage() {
           </div>
         </div>
 
-        {/* Cover image preview (read-only, edit below). */}
-        <div className="h-40 rounded-xl overflow-hidden bg-gradient-to-br from-orange-200 to-orange-400 relative">
+        {/* Cover image preview (click để phóng to). */}
+        <button
+          type="button"
+          onClick={() => resolveImageUrl(course.image_url) && setLightboxImage(resolveImageUrl(course.image_url))}
+          className="block w-full h-40 rounded-xl overflow-hidden bg-gradient-to-br from-orange-200 to-orange-400 relative group cursor-zoom-in"
+          aria-label="Phóng to ảnh bìa"
+        >
           {resolveImageUrl(course.image_url) ? (
             <img
               src={resolveImageUrl(course.image_url) ?? ''}
               alt={course.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               onError={(e) => {
                 ;(e.currentTarget as HTMLImageElement).style.display = 'none'
               }}
@@ -209,7 +217,12 @@ export default function AdminCourseDetailPage() {
           ) : (
             <div className="w-full h-full flex items-center justify-center text-5xl">📖</div>
           )}
-        </div>
+          <span className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition">
+            <span className="material-symbols-outlined text-white text-3xl opacity-0 group-hover:opacity-100 transition">
+              zoom_in
+            </span>
+          </span>
+        </button>
 
         {/* Inline editor for the course itself. */}
         {editingCourse && (
@@ -421,6 +434,30 @@ export default function AdminCourseDetailPage() {
         </table>
         </div>
       </div>
+
+      {/* Lightbox phóng to ảnh bìa */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setLightboxImage(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <img
+            src={lightboxImage}
+            alt={course.name}
+            className="max-w-[95vw] max-h-[95vh] object-contain rounded-lg shadow-2xl"
+          />
+          <button
+            type="button"
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-stone-800 flex items-center justify-center text-2xl"
+            aria-label="Đóng"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   )
 }

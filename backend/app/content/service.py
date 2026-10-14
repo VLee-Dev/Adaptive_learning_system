@@ -29,6 +29,8 @@ def get_course_detail(db: Session, course_id: int):
     if course is None:
         raise LookupError("Course not found")
     course.enrollment_count = _enrollment_count(db, course.id)
+    # Public endpoint: is_enrolled always False (auth required to check real enrollment)
+    course.is_enrolled = False
     return course
 
 

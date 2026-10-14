@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { useEffect } from 'react'
 import Layout from '@/components/Layout'
 import AdminLayout from '@/components/AdminLayout'
@@ -14,7 +14,7 @@ import NotFoundPage from '@/pages/auth/NotFoundPage'
 import ForbiddenPage from '@/pages/auth/ForbiddenPage'
 
 // Student pages
-import StudentDashboardPage from '@/pages/student/StudentDashboardPage'
+import HomepageStudent from '@/pages/student/HomepageStudent'
 import StudentCourseCatalogPage from '@/pages/student/StudentCourseCatalogPage'
 import StudentCourseDetailPage from '@/pages/student/StudentCourseDetailPage'
 import StudentChapterDetailPage from '@/pages/student/StudentChapterDetailPage'
@@ -22,6 +22,9 @@ import StudentTopicDetailPage from '@/pages/student/StudentTopicDetailPage'
 import StudentLessonViewPage from '@/pages/student/StudentLessonViewPage'
 import StudentPracticePage from '@/pages/student/StudentPracticePage'
 import StudentChapterTestPage from '@/pages/student/StudentChapterTestPage'
+
+// Public course detail (task 2: cho cả guest + student xem)
+import CourseDetailPublicPage from '@/pages/course/CourseDetailPublicPage'
 
 // Admin pages
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage'
@@ -60,16 +63,25 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forbidden" element={<ForbiddenPage />} />
         <Route path="/404" element={<NotFoundPage />} />
+        {/* Public course detail (task 2) — cả guest + student đều xem được */}
+        <Route path="/courses/:courseId" element={<CourseDetailPublicPage />} />
       </Route>
 
-      {/* App pages - with header */}
+      {/* Student app pages - with shared layout (no top header, pages provide their own) */}
       <Route element={<Layout />}>
-        {/* Student routes */}
         <Route
           path="/student/dashboard"
           element={
             <ProtectedRoute requiredRole="student">
-              <StudentDashboardPage />
+              <HomepageStudent />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/homepage"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <HomepageStudent />
             </ProtectedRoute>
           }
         />
@@ -130,18 +142,6 @@ function App() {
           }
         />
 
-        {/* Admin routes - wrapped in AdminLayout (sidebar + topbar) */}
-        <Route element={<ProtectedRoute requiredRole="admin"><AdminLayout /></ProtectedRoute>}>
-          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-          <Route path="/admin/courses" element={<AdminCourseListPage />} />
-          <Route path="/admin/courses/:courseId" element={<AdminCourseDetailPage />} />
-          <Route path="/admin/chapters/:chapterId" element={<AdminChapterDetailPage />} />
-          <Route path="/admin/topics/:topicId" element={<AdminTopicDetailPage />} />
-          <Route path="/admin/topics/:topicId/lessons/:lessonId" element={<AdminLessonEditorPage />} />
-          <Route path="/admin/topics/:topicId/questions/:questionId" element={<AdminQuestionEditorPage />} />
-          <Route path="/admin/chapters/:chapterId/final-test" element={<AdminChapterFinalTestBuilderPage />} />
-        </Route>
-
         {/* Shared */}
         <Route
           path="/profile"
@@ -151,10 +151,28 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        {/* Catch-all for app pages (404) */}
-        <Route path="*" element={<Navigate to="/404" replace />} />
       </Route>
+
+      {/* Admin routes - own layout (no shared top header) */}
+      <Route
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+        <Route path="/admin/courses" element={<AdminCourseListPage />} />
+        <Route path="/admin/courses/:courseId" element={<AdminCourseDetailPage />} />
+        <Route path="/admin/chapters/:chapterId" element={<AdminChapterDetailPage />} />
+        <Route path="/admin/topics/:topicId" element={<AdminTopicDetailPage />} />
+        <Route path="/admin/topics/:topicId/lessons/:lessonId" element={<AdminLessonEditorPage />} />
+        <Route path="/admin/topics/:topicId/questions/:questionId" element={<AdminQuestionEditorPage />} />
+        <Route path="/admin/chapters/:chapterId/final-test" element={<AdminChapterFinalTestBuilderPage />} />
+      </Route>
+
+      {/* Catch-all for app pages (404) */}
+      <Route path="*" element={<Navigate to="/404" replace />} />
     </Routes>
     </ErrorBoundary>
   )

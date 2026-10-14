@@ -27,6 +27,7 @@ class CourseAdminResponse(BaseModel):
     id: int
     name: str
     description: str | None
+    image_url: str | None
     is_published: bool
     is_archived: bool
     created_at: datetime

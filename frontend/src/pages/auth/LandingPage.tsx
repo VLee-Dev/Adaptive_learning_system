@@ -1,19 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import api from '@/lib/api'
+import { Link, useNavigate } from 'react-router-dom'
+import { courseApi, type CourseSummary, resolveImageUrl, toApiError } from '@/lib/api'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
 import { useAuthStore } from '@/stores/authStore'
-import { useNavigate } from 'react-router-dom'
-
-interface Course {
-  id: number
-  name: string
-  description: string | null
-  created_at: string
-}
 
 export default function LandingPage() {
-  const [courses, setCourses] = useState<Course[]>([])
+  const [courses, setCourses] = useState<CourseSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const requireAuth = useRequireAuth()
@@ -22,22 +14,24 @@ export default function LandingPage() {
 
   // Fetch public course list
   useEffect(() => {
-    api
-      .get<Course[]>('/courses')
-      .then((res) => setCourses(res.data))
-      .catch((err) => {
-        setError(
-          (err as { response?: { data?: { detail?: string } } }).response?.data?.detail ||
-            'Không tải được danh sách khóa học. Vui lòng thử lại sau.',
-        )
-      })
+    courseApi
+      .list()
+      .then((res) => setCourses(res))
+      .catch((err) => setError(toApiError(err).detail || 'Không tải được danh sách khóa học. Vui lòng thử lại sau.'))
       .finally(() => setLoading(false))
   }, [])
 
   const handleEnroll = (courseId: number) => {
+    // Guest: cần login trước → CourseDetailPublicPage sẽ lo phần này
+    // Logged-in: cần là student
     requireAuth(() => {
-      navigate(`/student/courses/${courseId}`)
+      navigate(`/courses/${courseId}`)
     })
+  }
+
+  const handleViewDetail = (courseId: number) => {
+    // Public: ai cũng xem được
+    navigate(`/courses/${courseId}`)
   }
 
   return (
@@ -52,9 +46,6 @@ export default function LandingPage() {
           <nav className="flex items-center gap-3 sm:gap-5 text-sm font-semibold">
             <a href="#courses" className="text-stone-700 hover:text-orange-600 transition">
               Khóa học
-            </a>
-            <a href="#features" className="hidden sm:inline text-stone-700 hover:text-orange-600 transition">
-              Tính năng
             </a>
             {user ? (
               <Link
@@ -170,23 +161,64 @@ export default function LandingPage() {
           {courses.map((c) => (
             <article
               key={c.id}
-              className="bg-[#FFFDF9] rounded-2xl border border-[#F2E4D2] p-6 shadow-sm hover:shadow-cozy hover:-translate-y-1 transition"
+              className="bg-white/90 backdrop-blur-md border border-cream-200 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col group"
             >
-              <div className="text-3xl mb-3">📚</div>
-              <h3 className="text-lg font-bold text-cream-900 line-clamp-2">{c.name}</h3>
-              <p className="mt-2 text-sm text-stone-600 line-clamp-3 min-h-[3.5rem]">
-                {c.description || 'Chưa có mô tả cho khóa học này.'}
-              </p>
-              <div className="mt-4 flex items-center justify-between">
-                <span className="text-xs text-stone-500">
-                  Tạo: {new Date(c.created_at).toLocaleDateString('vi-VN')}
-                </span>
-                <button
-                  onClick={() => handleEnroll(c.id)}
-                  className="text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline"
-                >
-                  Xem chi tiết →
-                </button>
+              {/* Thumbnail */}
+              <div className="relative h-44 w-full overflow-hidden">
+                {c.image_url ? (
+                  <img
+                    src={resolveImageUrl(c.image_url) ?? ''}
+                    alt={c.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-amber-300 to-orange-500 flex items-center justify-center text-white text-6xl">
+                    🎓
+                  </div>
+                )}
+                <div className="absolute bottom-3 right-3">
+                  <span className="px-2 py-0.5 rounded-lg bg-stone-800/75 text-white text-xs font-semibold">
+                    {c.enrollment_count} học viên
+                  </span>
+                </div>
+              </div>
+              {/* Body */}
+              <div className="p-5 space-y-3 flex-1">
+                <h3 className="text-base font-semibold text-stone-800 group-hover:text-orange-600 transition-colors line-clamp-2 leading-snug">
+                  {c.name}
+                </h3>
+                <p className="text-xs text-stone-600 line-clamp-3 min-h-[3rem]">
+                  {c.description || 'Chưa có mô tả cho khóa học này.'}
+                </p>
+              </div>
+              {/* Footer */}
+              <div className="p-5 pt-0">
+                <div className="pt-3 border-t border-cream-200 flex items-center justify-between">
+                  {c.is_enrolled ? (
+                    <Link
+                      to={`/student/courses/${c.id}`}
+                      className="px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold hover:bg-emerald-200 transition"
+                    >
+                      ✓ Đã đăng ký
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => handleEnroll(c.id)}
+                      className="px-4 py-1.5 rounded-full bg-orange-600 text-white text-sm font-semibold hover:bg-orange-700 transition shadow-sm"
+                    >
+                      Đăng ký
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleViewDetail(c.id)}
+                    className="text-sm font-semibold text-orange-700 hover:text-orange-600 flex items-center gap-1 transition-colors"
+                  >
+                    Xem chi tiết
+                    <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
+                      arrow_forward
+                    </span>
+                  </button>
+                </div>
               </div>
             </article>
           ))}

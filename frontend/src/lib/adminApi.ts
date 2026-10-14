@@ -82,6 +82,7 @@ export interface Course {
   description: string | null
   image_url: string | null
   is_published: boolean
+  is_archived: boolean
   created_at: string
 }
 

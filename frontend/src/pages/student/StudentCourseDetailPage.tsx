@@ -107,12 +107,14 @@ export default function StudentCourseDetailPage() {
   return (
     <div className="max-w-5xl space-y-6">
       <div className="flex items-center gap-3">
-        <Link
-          to="/student/courses"
-          className="px-3 py-2 rounded-xl bg-cream-100 text-stone-700 text-sm font-semibold hover:bg-cream-200"
+        <button
+          type="button"
+          onClick={() => navigate('/student/homepage')}
+          className="px-3 py-2 rounded-xl bg-cream-100 text-stone-700 text-sm font-semibold hover:bg-cream-200 flex items-center gap-1"
         >
-          ← Khóa học
-        </Link>
+          <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+          Quay lại
+        </button>
       </div>
 
       {error && (
