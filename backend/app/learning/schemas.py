@@ -1,5 +1,5 @@
 """Schemas for practice sessions and learning flow."""
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class PracticeStartRequest(BaseModel):
@@ -53,3 +53,45 @@ class TopicMasteryResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class MonthlyStreakResponse(BaseModel):
+    """Mini calendar: lịch học theo tháng.
+
+    Frontend gửi `year`, `month` (1-12) và `tz_offset_minutes` (phút offset local
+    của user so với UTC, vd Việt Nam = -420). Backend query study_sessions trong
+    khoảng [start_utc, end_utc) tương ứng với 00:00 ngày đầu tháng → 00:00 ngày
+    đầu tháng sau theo giờ local, group theo local date, trả dict {YYYY-MM-DD: phút}.
+    """
+    year: int
+    month: int = Field(ge=1, le=12)
+    days_in_month: int
+    first_weekday: int = Field(ge=0, le=6, description="0=Mon, 6=Sun theo ISO weekday")
+    minutes_per_day: dict[str, int] = Field(
+        default_factory=dict,
+        description="Map 'YYYY-MM-DD' (local date) → tổng phút học trong ngày đó"
+    )
+
+
+class StartStudySessionRequest(BaseModel):
+    """Request để bắt đầu 1 phiên học (khi user mở trang practice / chapter test)."""
+    kind: str = Field(pattern="^(practice|chapter_test)$")
+    reference_id: int | None = None
+
+
+class StartStudySessionResponse(BaseModel):
+    session_id: int
+    started_at: str
+    kind: str
+    reference_id: int | None
+
+
+class HeartbeatStudySessionRequest(BaseModel):
+    """Heartbeat mỗi 30s: cập nhật duration_seconds hiện tại."""
+    duration_seconds: int = Field(ge=0, le=86400)
+
+
+class StopStudySessionResponse(BaseModel):
+    session_id: int
+    duration_seconds: int
+    ended_at: str

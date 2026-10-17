@@ -1,11 +1,12 @@
 // CourseDetailPublicPage — trang chi tiết khóa học PUBLIC (không cần login).
 //
 // Khi chưa login:
-//   - "Xem chi tiết" → vẫn xem được trang này
+//   - "Xem chi tiết" / "Đăng ký" → vẫn xem được trang này
 //   - "Đăng ký" → redirect /login?return=/courses/:id
 // Khi đã login (role student):
-//   - "Đăng ký" → gọi API enroll, reload trang
-//   - Sau khi enrolled → nút đổi thành "Vào học" → /student/courses/:id
+//   - "Đăng ký" → gọi API enroll, ở lại trang public
+//   - Sau khi enrolled → nút đổi thành "Đã đăng ký" + nút mũi tên "Vào học ngay"
+//   - Click "Vào học ngay" / nút mũi tên → /student/courses/:id (trang student mới có nội dung học)
 //
 // Tham khảo: Frontend-example.MD task 2
 import { useEffect, useState } from 'react'
@@ -48,7 +49,7 @@ export default function CourseDetailPublicPage() {
     setError(null)
     try {
       await courseApi.enroll(course.id)
-      // Reload để cập nhật is_enrolled
+      // Reload để cập nhật is_enrolled (giữ nguyên trang public)
       const updated = await courseApi.detail(course.id)
       setCourse(updated)
     } catch (e) {
@@ -57,6 +58,10 @@ export default function CourseDetailPublicPage() {
       setEnrolling(false)
     }
   }
+
+  // Nút "Quay lại" — student → /student/homepage, guest → /
+  const backHref = user?.role === 'student' ? '/student/homepage' : '/'
+  const backLabel = user?.role === 'student' ? '← Quay lại' : '← Trang chủ'
 
   if (loading) {
     return (
@@ -114,19 +119,14 @@ export default function CourseDetailPublicPage() {
         </header>
 
         <main className="flex-1 max-w-7xl mx-auto px-6 lg:px-12 py-8 space-y-6 w-full">
-          {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-stone-500">
-            <Link to="/" className="hover:text-orange-600 transition-colors flex items-center gap-1">
-              <span className="material-symbols-outlined text-[16px]">home</span>
-              Trang chủ
-            </Link>
-            <span className="material-symbols-outlined text-[14px] text-stone-400">chevron_right</span>
-            <Link to="/student/courses" className="hover:text-orange-600 transition-colors">
-              Khóa học
-            </Link>
-            <span className="material-symbols-outlined text-[14px] text-stone-400">chevron_right</span>
-            <span className="text-stone-800 font-semibold truncate max-w-xs md:max-w-md">{course.name}</span>
-          </nav>
+          {/* Back link — thay cho breadcrumb */}
+          <Link
+            to={backHref}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/80 border border-cream-200 text-stone-700 text-sm font-semibold hover:bg-white hover:border-orange-300 transition-all"
+          >
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            {backLabel}
+          </Link>
 
           {/* Hero */}
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
@@ -207,13 +207,19 @@ export default function CourseDetailPublicPage() {
                 </div>
 
                 {course.is_enrolled ? (
-                  <Link
-                    to={`/student/courses/${course.id}`}
-                    className="w-full py-4 px-6 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center justify-center gap-3 shadow-md transition-all"
-                  >
-                    <span className="material-symbols-outlined text-[22px]">play_circle</span>
-                    Vào học ngay
-                  </Link>
+                  <>
+                    <div className="w-full py-4 px-6 rounded-full bg-emerald-100 text-emerald-700 font-semibold flex items-center justify-center gap-3">
+                      <span className="material-symbols-outlined text-[22px]">check_circle</span>
+                      Đã đăng ký
+                    </div>
+                    <Link
+                      to={`/student/courses/${course.id}`}
+                      className="w-full py-3 px-6 rounded-full bg-orange-600 hover:bg-orange-700 text-white font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98] transition-all"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                      Vào học ngay
+                    </Link>
+                  </>
                 ) : (
                   <button
                     type="button"

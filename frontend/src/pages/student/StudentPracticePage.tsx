@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import api, { toApiError } from '@/lib/api'
+import { useStudySession } from '@/hooks/useStudySession'
 
 interface PracticeQuestion {
   question_id: number
@@ -49,6 +50,12 @@ export default function StudentPracticePage() {
     status: NextResponse['status']
   } | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
+
+  // Đo thời gian học thực tế → cập nhật calendar "Lịch học của bạn"
+  useStudySession({
+    kind: 'practice',
+    referenceId: Number.isFinite(topicIdNum) ? topicIdNum : null,
+  })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)

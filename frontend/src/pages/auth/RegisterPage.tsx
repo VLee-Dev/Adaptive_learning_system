@@ -32,7 +32,7 @@ export default function RegisterPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate(user.role === 'admin' ? '/admin/courses' : '/student/dashboard', { replace: true })
+      navigate(user.role === 'admin' ? '/admin/courses' : '/student/homepage', { replace: true })
     }
   }, [user, navigate])
 
@@ -50,7 +50,7 @@ export default function RegisterPage() {
       await register(values.email, values.password, values.full_name)
       toast.success('Tạo tài khoản thành công! 🐾')
       const currentUser = useAuthStore.getState().user
-      navigate(currentUser?.role === 'admin' ? '/admin/courses' : '/student/dashboard', { replace: true })
+      navigate(currentUser?.role === 'admin' ? '/admin/courses' : '/student/homepage', { replace: true })
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } }).response?.data?.detail || 'Đăng ký thất bại'
       toast.error(detail)

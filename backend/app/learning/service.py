@@ -1,5 +1,8 @@
 """Service layer for practice learning flow."""
+import calendar
 import random
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy.orm import Session
 
 from app.attempts.model import Attempt
@@ -161,4 +164,48 @@ def get_topic_mastery_status(db: Session, user_id: int, topic_id: int) -> TopicM
         current_level=mastery.current_level,
         practice_attempts=mastery.practice_attempts,
         status=mastery.status
+    )
+
+
+def get_monthly_streak(
+    db: Session,
+    user_id: int,
+    year: int,
+    month: int,
+    tz_offset_minutes: int = 0,
+) -> "MonthlyStreakResponse":
+    """Trả về mini-calendar streak cho tháng `year-month` theo giờ local của user.
+
+    Tính tổng duration_seconds của study_sessions, group theo local date,
+    trả về dict { 'YYYY-MM-DD': phút }. Quy ước "≥ 1 phút = có học" do FE xử lý.
+
+    Args:
+        user_id: ID student
+        year, month: tháng cần xem (1-12)
+        tz_offset_minutes: offset phút local-UTC. Việt Nam (UTC+7) = -420.
+
+    Returns:
+        MonthlyStreakResponse: days_in_month, first_weekday (0=Mon), minutes_per_day
+    """
+    from app.learning.schemas import MonthlyStreakResponse
+    from app.study_sessions.service import get_minutes_per_day
+
+    # Auto-close các session cũ trước khi tính
+    from app.study_sessions.repository import auto_abandon_stale
+    auto_abandon_stale(db, user_id)
+
+    minutes_per_day = get_minutes_per_day(db, user_id, year, month, tz_offset_minutes)
+
+    # Tính first_weekday theo local
+    local_tz = timezone(timedelta(minutes=-tz_offset_minutes))
+    start_local = datetime(year, month, 1, 0, 0, 0, tzinfo=local_tz)
+    first_weekday = start_local.weekday()
+    days_in_month = calendar.monthrange(year, month)[1]
+
+    return MonthlyStreakResponse(
+        year=year,
+        month=month,
+        days_in_month=days_in_month,
+        first_weekday=first_weekday,
+        minutes_per_day=minutes_per_day,
     )

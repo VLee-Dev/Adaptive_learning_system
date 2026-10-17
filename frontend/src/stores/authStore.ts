@@ -18,6 +18,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, fullName?: string) => Promise<void>
   fetchMe: () => Promise<void>
+  setUser: (user: User | null) => void
   logout: () => void
 }
 
@@ -74,6 +75,8 @@ export const useAuthStore = create<AuthState>()(
         localStorage.removeItem('access_token')
         set({ user: null, token: null, error: null })
       },
+
+      setUser: (user) => set({ user }),
     }),
     {
       name: 'auth-storage',

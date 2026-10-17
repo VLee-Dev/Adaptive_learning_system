@@ -49,7 +49,7 @@ export default function LandingPage() {
             </a>
             {user ? (
               <Link
-                to={user.role === 'admin' ? '/admin/courses' : '/student/dashboard'}
+                to={user.role === 'admin' ? '/admin/courses' : '/student/homepage'}
                 className="px-4 py-2 rounded-xl bg-orange-600 text-white hover:bg-orange-700 transition shadow-sm"
               >
                 Dashboard
@@ -193,31 +193,43 @@ export default function LandingPage() {
               </div>
               {/* Footer */}
               <div className="p-5 pt-0">
-                <div className="pt-3 border-t border-cream-200 flex items-center justify-between">
+                <div className="pt-3 border-t border-cream-200 flex items-center justify-between gap-2">
                   {c.is_enrolled ? (
-                    <Link
-                      to={`/student/courses/${c.id}`}
-                      className="px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold hover:bg-emerald-200 transition"
-                    >
-                      ✓ Đã đăng ký
-                    </Link>
+                    <>
+                      <span
+                        className="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold"
+                      >
+                        ✓ Đã đăng ký
+                      </span>
+                      <Link
+                        to={`/student/courses/${c.id}`}
+                        className="text-sm font-semibold text-orange-700 hover:text-orange-600 flex items-center gap-1"
+                      >
+                        Vào học
+                        <span className="material-symbols-outlined text-[18px]">
+                          arrow_forward
+                        </span>
+                      </Link>
+                    </>
                   ) : (
-                    <button
-                      onClick={() => handleEnroll(c.id)}
-                      className="px-4 py-1.5 rounded-full bg-orange-600 text-white text-sm font-semibold hover:bg-orange-700 transition shadow-sm"
-                    >
-                      Đăng ký
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleEnroll(c.id)}
+                        className="px-4 py-1.5 rounded-full bg-orange-600 text-white text-sm font-semibold hover:bg-orange-700 transition shadow-sm"
+                      >
+                        Đăng ký
+                      </button>
+                      <button
+                        onClick={() => handleViewDetail(c.id)}
+                        className="text-sm font-semibold text-orange-700 hover:text-orange-600 flex items-center gap-1 transition-colors"
+                      >
+                        Xem chi tiết
+                        <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
+                          arrow_forward
+                        </span>
+                      </button>
+                    </>
                   )}
-                  <button
-                    onClick={() => handleViewDetail(c.id)}
-                    className="text-sm font-semibold text-orange-700 hover:text-orange-600 flex items-center gap-1 transition-colors"
-                  >
-                    Xem chi tiết
-                    <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
-                      arrow_forward
-                    </span>
-                  </button>
                 </div>
               </div>
             </article>

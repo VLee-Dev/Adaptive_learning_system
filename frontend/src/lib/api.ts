@@ -69,6 +69,13 @@ export interface CourseDetail {
 export const courseApi = {
   list: () => api.get<CourseSummary[]>('/courses').then((r) => r.data),
   detail: (id: number) => api.get<CourseDetail>(`/courses/${id}`).then((r) => r.data),
+  /** Trả về trạng thái enrollment của user hiện tại với course (yêu cầu auth). */
+  enrollmentStatus: (id: number) =>
+    api
+      .get<{ is_enrolled: boolean; status: string | null; enrolled_at: string | null }>(
+        `/courses/${id}/enrollment-status`,
+      )
+      .then((r) => r.data),
   enroll: (id: number) =>
     api
       .post<{ id: number; course_id: number; status: string; enrolled_at: string }>(
@@ -109,4 +116,63 @@ export const uploadApi = {
       })
       .then((r) => r.data)
   },
+}
+
+// Learning -------------------------------------------------------------------
+export interface MonthlyStreakResponse {
+  year: number
+  month: number
+  days_in_month: number
+  first_weekday: number // 0=Mon ... 6=Sun
+  /** Map 'YYYY-MM-DD' (local date) → tổng phút học. */
+  minutes_per_day: Record<string, number>
+}
+
+export interface StartStudySessionResponse {
+  session_id: number
+  started_at: string
+  kind: 'practice' | 'chapter_test'
+  reference_id: number | null
+}
+
+export interface StopStudySessionResponse {
+  session_id: number
+  duration_seconds: number
+  ended_at: string
+}
+
+export const learningApi = {
+  /** Mini calendar: lịch học theo tháng (đơn vị phút), theo giờ local user.
+   *  - tzOffsetMinutes: new Date().getTimezoneOffset() (vd Việt Nam = -420)
+   */
+  getMonthlyStreak: (year: number, month: number, tzOffsetMinutes: number) =>
+    api
+      .get<MonthlyStreakResponse>('/learning/monthly-streak', {
+        params: { year, month, tz_offset_minutes: tzOffsetMinutes },
+      })
+      .then((r) => r.data),
+
+  /** Bắt đầu 1 phiên học (khi mở trang practice / chapter-test). */
+  startStudySession: (kind: 'practice' | 'chapter_test', referenceId: number | null) =>
+    api
+      .post<StartStudySessionResponse>('/learning/study-sessions/start', {
+        kind,
+        reference_id: referenceId,
+      })
+      .then((r) => r.data),
+
+  /** Heartbeat mỗi ~30s: cập nhật duration_seconds hiện tại. */
+  heartbeatStudySession: (sessionId: number, durationSeconds: number) =>
+    api
+      .post<StartStudySessionResponse>(
+        `/learning/study-sessions/${sessionId}/heartbeat`,
+        { duration_seconds: durationSeconds },
+      )
+      .then((r) => r.data),
+
+  /** Kết thúc phiên học (submit answer / leave page / idle). */
+  stopStudySession: (sessionId: number) =>
+    api
+      .post<StopStudySessionResponse>(`/learning/study-sessions/${sessionId}/stop`)
+      .then((r) => r.data),
 }

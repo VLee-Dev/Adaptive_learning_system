@@ -15,6 +15,7 @@ class CourseSummary(BaseModel):
     image_url: str | None
     enrollment_count: int
     created_at: datetime
+    is_enrolled: bool = False  # True nếu user hiện tại đã đăng ký (chỉ khi auth)
 
 
 class CourseDetail(BaseModel):

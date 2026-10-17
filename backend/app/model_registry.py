@@ -9,6 +9,7 @@ from app.mastery.model import TopicMastery
 from app.questions.model import Question
 from app.recommendations.model import Recommendation
 from app.stimuli.model import Stimulus
+from app.study_sessions.model import StudySession
 from app.topics.model import Topic
 from app.chapters.model import Chapter
 # Import User LAST - it has relationships to Attempt/LearningEvent/TopicMastery/
@@ -20,5 +21,6 @@ __all__ = [
     "Attempt", "Chapter", "ChapterCompletion", "ChapterFinalTest",
     "ChapterTestPool", "ChapterTestSlot", "Course", "CourseCompletion",
     "CourseEnrollment", "LearningEvent", "Lesson",
-    "Question", "Recommendation", "Stimulus", "Topic", "TopicMastery", "User",
+    "Question", "Recommendation", "Stimulus", "StudySession",
+    "Topic", "TopicMastery", "User",
 ]

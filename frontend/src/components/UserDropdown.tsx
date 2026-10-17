@@ -35,7 +35,7 @@ export default function UserDropdown() {
           <p className="text-xs text-stone-500 truncate">{user.email}</p>
         </div>
         <Link
-          to="/profile"
+          to={user.role === 'admin' ? '/admin/profile' : '/student/profile'}
           className="flex items-center gap-3 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-100 transition"
         >
           <span className="material-symbols-outlined text-[18px] text-orange-700">

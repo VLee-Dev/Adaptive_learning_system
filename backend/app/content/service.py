@@ -5,6 +5,7 @@ from app.content.repository import (
     list_chapters_by_course, list_lessons_by_topic, list_published_courses,
     list_topics_by_chapter,
 )
+from app.content.schemas import CourseDetail
 from app.enrollments.model import CourseEnrollment
 from sqlalchemy import select, func
 
@@ -17,21 +18,39 @@ def _enrollment_count(db: Session, course_id: int) -> int:
     ).scalar() or 0
 
 
-def get_public_courses(db: Session):
+def get_public_courses(db: Session, user_id: int | None = None):
+    """Lấy danh sách khóa học public.
+
+    Nếu `user_id` được cung cấp, mỗi course sẽ có `is_enrolled` phản ánh
+    đúng enrollment của user đó.
+    """
     courses = list_published_courses(db)
     for c in courses:
         c.enrollment_count = _enrollment_count(db, c.id)
+        if user_id is None:
+            c.is_enrolled = False
+        else:
+            from app.enrollments.repository import get_enrollment
+            c.is_enrolled = get_enrollment(db, user_id, c.id) is not None
     return courses
 
 
-def get_course_detail(db: Session, course_id: int):
+def get_course_detail(db: Session, course_id: int, user_id: int | None = None) -> CourseDetail:
+    """Trả về CourseDetail cho trang public.
+
+    Nếu `user_id` được cung cấp (student đã đăng nhập), `is_enrolled`
+    sẽ phản ánh đúng enrollment của user đó. Ngược lại (guest) luôn False.
+    """
     course = get_course_by_id(db, course_id)
     if course is None:
         raise LookupError("Course not found")
     course.enrollment_count = _enrollment_count(db, course.id)
-    # Public endpoint: is_enrolled always False (auth required to check real enrollment)
-    course.is_enrolled = False
-    return course
+    if user_id is None:
+        course.is_enrolled = False
+    else:
+        from app.enrollments.repository import get_enrollment
+        course.is_enrolled = get_enrollment(db, user_id, course_id) is not None
+    return CourseDetail.model_validate(course)
 
 
 def get_course_chapters(db: Session, course_id: int):

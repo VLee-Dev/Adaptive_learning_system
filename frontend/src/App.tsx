@@ -16,6 +16,7 @@ import ForbiddenPage from '@/pages/auth/ForbiddenPage'
 // Student pages
 import HomepageStudent from '@/pages/student/HomepageStudent'
 import StudentCourseCatalogPage from '@/pages/student/StudentCourseCatalogPage'
+import StudentProfilePage from '@/pages/student/StudentProfilePage'
 import StudentCourseDetailPage from '@/pages/student/StudentCourseDetailPage'
 import StudentChapterDetailPage from '@/pages/student/StudentChapterDetailPage'
 import StudentTopicDetailPage from '@/pages/student/StudentTopicDetailPage'
@@ -28,6 +29,7 @@ import CourseDetailPublicPage from '@/pages/course/CourseDetailPublicPage'
 
 // Admin pages
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage'
+import AdminProfilePage from '@/pages/admin/AdminProfilePage'
 import AdminCourseListPage from '@/pages/admin/AdminCourseListPage'
 import AdminCourseDetailPage from '@/pages/admin/AdminCourseDetailPage'
 import AdminChapterDetailPage from '@/pages/admin/AdminChapterDetailPage'
@@ -35,9 +37,6 @@ import AdminTopicDetailPage from '@/pages/admin/AdminTopicDetailPage'
 import AdminLessonEditorPage from '@/pages/admin/AdminLessonEditorPage'
 import AdminQuestionEditorPage from '@/pages/admin/AdminQuestionEditorPage'
 import AdminChapterFinalTestBuilderPage from '@/pages/admin/AdminChapterFinalTestBuilderPage'
-
-// Shared
-import ProfilePage from '@/pages/ProfilePage'
 
 function App() {
   const token = useAuthStore((s) => s.token)
@@ -69,14 +68,6 @@ function App() {
 
       {/* Student app pages - with shared layout (no top header, pages provide their own) */}
       <Route element={<Layout />}>
-        <Route
-          path="/student/dashboard"
-          element={
-            <ProtectedRoute requiredRole="student">
-              <HomepageStudent />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/student/homepage"
           element={
@@ -142,12 +133,11 @@ function App() {
           }
         />
 
-        {/* Shared */}
         <Route
-          path="/profile"
+          path="/student/profile"
           element={
-            <ProtectedRoute>
-              <ProfilePage />
+            <ProtectedRoute requiredRole="student">
+              <StudentProfilePage />
             </ProtectedRoute>
           }
         />
@@ -162,6 +152,7 @@ function App() {
         }
       >
         <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+        <Route path="/admin/profile" element={<AdminProfilePage />} />
         <Route path="/admin/courses" element={<AdminCourseListPage />} />
         <Route path="/admin/courses/:courseId" element={<AdminCourseDetailPage />} />
         <Route path="/admin/chapters/:chapterId" element={<AdminChapterDetailPage />} />

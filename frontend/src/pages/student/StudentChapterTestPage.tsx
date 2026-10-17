@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import api, { toApiError } from '@/lib/api'
+import { useStudySession } from '@/hooks/useStudySession'
 
 interface TestQuestion {
   question_id: number
@@ -48,6 +49,12 @@ export default function StudentChapterTestPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Đo thời gian học thực tế → cập nhật calendar "Lịch học của bạn"
+  useStudySession({
+    kind: 'chapter_test',
+    referenceId: Number.isFinite(chapterIdNum) ? chapterIdNum : null,
+  })
 
   // Start test on mount
   useEffect(() => {

@@ -40,12 +40,19 @@ export default function StudentCourseCatalogPage() {
     setError(null)
     try {
       await courseApi.enroll(courseId)
+      // Reload list để cập nhật is_enrolled
       await load()
+      // Ở lại trang catalog, nút sẽ đổi thành "Đã đăng ký" + mũi tên "Vào học"
     } catch (err) {
       setError(toApiError(err).detail)
     } finally {
       setEnrollingId(null)
     }
+  }
+
+  const handleCardClick = (courseId: number) => {
+    // Tất cả click đều qua trang public trước
+    navigate(`/courses/${courseId}`)
   }
 
   if (loading) return <div className="text-stone-500">Đang tải…</div>
@@ -117,33 +124,48 @@ export default function StudentCourseCatalogPage() {
                 </div>
               </div>
               <div className="p-5 pt-0">
-                <div className="pt-3 border-t border-cream-200 flex items-center justify-between">
+                <div className="pt-3 border-t border-cream-200 flex items-center justify-between gap-2">
                   {c.is_enrolled ? (
-                    <Link
-                      to={`/student/courses/${c.id}`}
-                      className="px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold hover:bg-emerald-200 transition"
-                    >
-                      ✓ Đã đăng ký
-                    </Link>
+                    <>
+                      <span
+                        className="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold"
+                        title="Bạn đã đăng ký khóa học này"
+                      >
+                        ✓ Đã đăng ký
+                      </span>
+                      <Link
+                        to={`/student/courses/${c.id}`}
+                        className="text-sm font-semibold text-orange-700 hover:text-orange-600 flex items-center gap-1"
+                        title="Vào học ngay"
+                      >
+                        Vào học
+                        <span className="material-symbols-outlined text-[18px]">
+                          arrow_forward
+                        </span>
+                      </Link>
+                    </>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={(e) => handleEnroll(e, c.id)}
-                      disabled={enrollingId === c.id}
-                      className="px-4 py-1.5 rounded-full bg-orange-600 text-white text-sm font-semibold hover:bg-orange-700 transition disabled:opacity-50"
-                    >
-                      {enrollingId === c.id ? 'Đang đăng ký…' : 'Đăng ký'}
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => handleEnroll(e, c.id)}
+                        disabled={enrollingId === c.id}
+                        className="px-4 py-1.5 rounded-full bg-orange-600 text-white text-sm font-semibold hover:bg-orange-700 transition disabled:opacity-50"
+                      >
+                        {enrollingId === c.id ? 'Đang đăng ký…' : 'Đăng ký'}
+                      </button>
+                      <Link
+                        to={`/courses/${c.id}`}
+                        className="text-sm font-semibold text-orange-700 hover:text-orange-600 flex items-center gap-1"
+                        aria-label="Xem chi tiết"
+                      >
+                        Xem chi tiết
+                        <span className="material-symbols-outlined text-[18px]">
+                          arrow_forward
+                        </span>
+                      </Link>
+                    </>
                   )}
-                  <Link
-                    to={`/student/courses/${c.id}`}
-                    className="text-stone-400 hover:text-orange-600 transition"
-                    aria-label="Xem chi tiết"
-                  >
-                    <span className="material-symbols-outlined text-[22px]">
-                      arrow_forward
-                    </span>
-                  </Link>
                 </div>
               </div>
             </div>

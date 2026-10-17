@@ -20,7 +20,7 @@ export default function Layout({ bare = false }: LayoutProps) {
   // HomepageStudent tự render StudentHeader (vì có searchAutocomplete) → ẩn header chung.
   const isStudent = user?.role === 'student'
   const isHomepage =
-    location.pathname === '/student/homepage' || location.pathname === '/student/dashboard'
+    location.pathname === '/student/homepage'
   const showStudentHeader = isStudent && !isHomepage
 
   const containerClass = isStudent
@@ -30,10 +30,10 @@ export default function Layout({ bare = false }: LayoutProps) {
   return (
     <div className={containerClass}>
       {showStudentHeader && <StudentHeader />}
-      <main className="flex-1 w-full">
+      <main className="flex-1 w-full pb-16">
         <Outlet />
       </main>
-      <footer className="border-t border-cream-200 py-4 text-center text-xs text-stone-500">
+      <footer className="fixed bottom-0 left-0 right-0 z-30 border-t border-cream-200 py-3 text-center text-xs text-stone-500 bg-white/95 backdrop-blur-md shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
         🐱 Adaptive Learning · {new Date().getFullYear()}
       </footer>
     </div>

@@ -4,6 +4,7 @@ import { courseApi, type CourseSummary, toApiError } from '@/lib/api'
 import { useAuthStore } from '@/stores/authStore'
 import { resolveImageUrl } from '@/lib/api'
 import StudentHeader from '@/components/StudentHeader'
+import MonthlyStreakCalendar from '@/components/MonthlyStreakCalendar'
 
 // ----- Helpers ---------------------------------------------------------------
 function greetingByHour(date = new Date()): { text: string; emoji: string } {
@@ -16,28 +17,20 @@ function greetingByHour(date = new Date()): { text: string; emoji: string } {
 
 // ----- Sub-components --------------------------------------------------------
 
-/** Greeting section + "Chuỗi 21 ngày" badge (TODO: lấy từ BE) */
+/** Greeting section — chào theo giờ trong ngày */
 function GreetingSection({ name }: { name: string }) {
   const { text, emoji } = greetingByHour()
   return (
-    <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-cream-100/90 backdrop-blur-md rounded-3xl p-6 lg:p-8 shadow-sm border border-cream-200 relative overflow-hidden">
+    <section className="flex items-center gap-4 bg-cream-100/90 backdrop-blur-md rounded-3xl p-6 lg:p-8 shadow-sm border border-cream-200 relative overflow-hidden">
       <div className="absolute -right-8 -bottom-10 pointer-events-none opacity-10 select-none text-orange-600">
         <span className="material-symbols-outlined text-[180px]">pets</span>
       </div>
-      <div className="flex items-center gap-4 relative z-10">
-        <div className="w-14 h-14 rounded-2xl bg-orange-600 text-white flex items-center justify-center shrink-0 shadow-md">
-          <span className="material-symbols-outlined text-[28px]">waving_hand</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl sm:text-3xl font-bold text-stone-800 tracking-tight">
-            {text}, {name}! {emoji}
-          </h1>
-          <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold flex items-center gap-1">
-            <span className="material-symbols-outlined text-[14px]">local_fire_department</span>
-            Chuỗi 21 ngày
-          </span>
-        </div>
+      <div className="w-14 h-14 rounded-2xl bg-orange-600 text-white flex items-center justify-center shrink-0 shadow-md relative z-10">
+        <span className="material-symbols-outlined text-[28px]">waving_hand</span>
       </div>
+      <h1 className="text-2xl sm:text-3xl font-bold text-stone-800 tracking-tight relative z-10">
+        {text}, {name}! {emoji}
+      </h1>
     </section>
   )
 }
@@ -99,7 +92,7 @@ function PrimaryCourseCard({ course }: { course: CourseSummary }) {
   const totalLessons = 25
   const completedLessons = 0
   return (
-    <div className="lg:col-span-8 bg-white/90 backdrop-blur-md border border-cream-200 rounded-3xl p-6 lg:p-8 shadow-sm flex flex-col justify-between relative overflow-hidden">
+    <div className="bg-white/90 backdrop-blur-md border border-cream-200 rounded-3xl p-6 lg:p-8 shadow-sm flex flex-col justify-between relative overflow-hidden">
       <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-orange-100/50 via-cream-100/20 to-transparent rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
       <div className="space-y-6 relative z-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -161,70 +154,8 @@ function PrimaryCourseCard({ course }: { course: CourseSummary }) {
   )
 }
 
-/** 7-day paw print calendar (TODO: lấy từ BE) */
-function WeeklyStreak() {
-  const days = [
-    { label: 'T2', done: true },
-    { label: 'T3', done: true },
-    { label: 'T4', done: true },
-    { label: 'T5', done: true },
-    { label: 'T6', done: true, today: true },
-    { label: 'T7', done: true },
-    { label: 'CN', done: false, pending: true },
-  ]
-  return (
-    <div className="lg:col-span-4 flex flex-col justify-start">
-      <div className="bg-white/90 backdrop-blur-md border border-cream-200 rounded-3xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-orange-600 text-[20px]">calendar_month</span>
-            <h4 className="text-lg font-bold text-stone-800">Chuỗi 7 ngày</h4>
-          </div>
-          <span className="text-xs font-bold text-orange-700">Tuần này: 6/7 (TODO)</span>
-        </div>
-        <div className="grid grid-cols-7 gap-1.5 text-center">
-          {days.map((d) => (
-            <div
-              key={d.label}
-              className={`flex flex-col items-center gap-1.5 p-2 rounded-2xl ${
-                d.today
-                  ? 'bg-orange-600 text-white shadow-md'
-                  : d.done
-                    ? 'bg-cream-100'
-                    : 'bg-white border border-dashed border-cream-300'
-              }`}
-            >
-              <span className={`text-[10px] font-semibold ${d.today ? 'font-bold' : 'text-stone-500'}`}>
-                {d.label}
-              </span>
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  d.today
-                    ? 'bg-white text-orange-600'
-                    : d.done
-                      ? 'bg-orange-100 text-orange-600'
-                      : 'bg-cream-100 text-stone-400'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[16px]">
-                  {d.pending ? 'lock' : 'pets'}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-stone-500 text-center mt-3">
-          Hoàn thành bài học ngày mai để nhận Huy hiệu{' '}
-          <strong className="text-orange-700 font-semibold">"Mèo Siêng Năng"</strong>! 🐱
-        </p>
-      </div>
-    </div>
-  )
-}
-
 /** Card nhỏ cho "Các khóa học nổi bật" (4-card grid) */
 function FeaturedCourseCard({ course }: { course: CourseSummary }) {
-  const navigate = useNavigate()
   return (
     <div className="bg-white/90 backdrop-blur-md border border-cream-200 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
       <div>
@@ -256,32 +187,45 @@ function FeaturedCourseCard({ course }: { course: CourseSummary }) {
         </div>
       </div>
       <div className="p-5 pt-0">
-        <div className="pt-3 border-t border-cream-200 flex items-center justify-between">
+        <div className="pt-3 border-t border-cream-200 flex items-center justify-between gap-2">
           {course.is_enrolled ? (
-            <Link
-              to={`/student/courses/${course.id}`}
-              className="px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold hover:bg-emerald-200 transition"
-            >
-              ✓ Đã đăng ký
-            </Link>
+            <>
+              <span
+                className="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold"
+                title="Bạn đã đăng ký khóa học này"
+              >
+                ✓ Đã đăng ký
+              </span>
+              <Link
+                to={`/student/courses/${course.id}`}
+                className="text-sm font-semibold text-orange-700 hover:text-orange-600 flex items-center gap-1 transition-colors"
+                title="Vào học ngay"
+              >
+                Vào học
+                <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
+                  arrow_forward
+                </span>
+              </Link>
+            </>
           ) : (
-            <button
-              type="button"
-              onClick={() => navigate(`/courses/${course.id}`)}
-              className="px-4 py-1.5 rounded-full bg-orange-600 text-white text-sm font-semibold hover:bg-orange-700 transition shadow-sm"
-            >
-              Đăng ký
-            </button>
+            <>
+              <Link
+                to={`/courses/${course.id}`}
+                className="px-4 py-1.5 rounded-full bg-orange-600 text-white text-sm font-semibold hover:bg-orange-700 transition shadow-sm"
+              >
+                Đăng ký
+              </Link>
+              <Link
+                to={`/courses/${course.id}`}
+                className="text-sm font-semibold text-orange-700 hover:text-orange-600 flex items-center gap-1 transition-colors"
+              >
+                Xem chi tiết
+                <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
+                  arrow_forward
+                </span>
+              </Link>
+            </>
           )}
-          <Link
-            to={`/courses/${course.id}`}
-            className="text-sm font-semibold text-orange-700 hover:text-orange-600 flex items-center gap-1 transition-colors"
-          >
-            Xem chi tiết
-            <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
-              arrow_forward
-            </span>
-          </Link>
         </div>
       </div>
     </div>
@@ -350,6 +294,8 @@ export default function HomepageStudent() {
                 results={searchResults}
                 onPick={(id) => {
                   setSearch('')
+                  // Tất cả các khóa học đều đi qua trang public trước.
+                  // Nếu đã enrolled thì nút mũi tên "Vào học" sẽ đưa vào /student/courses/:id.
                   navigate(`/courses/${id}`)
                 }}
               />
@@ -357,7 +303,7 @@ export default function HomepageStudent() {
           )}
         </div>
 
-        <main className="flex-1 w-full max-w-7xl mx-auto px-6 lg:px-12 py-8 space-y-10 pb-16">
+        <main className="flex-1 w-full max-w-7xl mx-auto px-4 lg:px-8 py-8 space-y-10 pb-20">
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>
           )}
@@ -365,7 +311,7 @@ export default function HomepageStudent() {
           {/* 1. Greeting */}
           <GreetingSection name={displayName} />
 
-          {/* 2. Đang học + weekly streak */}
+          {/* 2. Đang học + Lịch học tháng (cùng hàng: 2/3 + 1/3) */}
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -386,24 +332,28 @@ export default function HomepageStudent() {
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
               </Link>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              {primaryCourse ? (
-                <PrimaryCourseCard course={primaryCourse} />
-              ) : (
-                <div className="lg:col-span-8 bg-white/90 backdrop-blur-md border border-cream-200 rounded-3xl p-6 lg:p-8 shadow-sm flex items-center justify-center min-h-[280px]">
-                  <div className="text-center">
-                    <div className="text-6xl mb-3">📚</div>
-                    <p className="text-stone-600">Bạn chưa đăng ký khóa học nào.</p>
-                    <Link
-                      to="/student/courses"
-                      className="mt-4 inline-block px-4 py-2 rounded-xl bg-orange-600 text-white font-semibold hover:bg-orange-700 transition"
-                    >
-                      Khám phá khóa học
-                    </Link>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">
+              <div className="lg:col-span-2">
+                {primaryCourse ? (
+                  <PrimaryCourseCard course={primaryCourse} />
+                ) : (
+                  <div className="bg-white/90 backdrop-blur-md border border-cream-200 rounded-3xl p-6 lg:p-8 shadow-sm flex items-center justify-center min-h-[280px]">
+                    <div className="text-center">
+                      <div className="text-6xl mb-3">📚</div>
+                      <p className="text-stone-600">Bạn chưa đăng ký khóa học nào.</p>
+                      <Link
+                        to="/student/courses"
+                        className="mt-4 inline-block px-4 py-2 rounded-xl bg-orange-600 text-white font-semibold hover:bg-orange-700 transition"
+                      >
+                        Khám phá khóa học
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              )}
-              <WeeklyStreak />
+                )}
+              </div>
+              <div className="lg:col-span-1">
+                <MonthlyStreakCalendar />
+              </div>
             </div>
           </section>
 
@@ -432,7 +382,7 @@ export default function HomepageStudent() {
           </section>
         </main>
 
-        <footer className="bg-white/95 backdrop-blur-md border-t border-cream-200 py-6">
+        <footer className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-cream-200 py-4 shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
           <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center text-xs text-stone-500">
             © 2026 Neko Study Space. Dành cho những giờ học bình yên.
           </div>

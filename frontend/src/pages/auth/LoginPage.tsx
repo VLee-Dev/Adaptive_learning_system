@@ -21,7 +21,7 @@ export default function LoginPage() {
   const user = useAuthStore((s) => s.user)
   useEffect(() => {
     if (user) {
-      navigate(user.role === 'admin' ? '/admin/courses' : '/student/dashboard', { replace: true })
+      navigate(user.role === 'admin' ? '/admin/courses' : '/student/homepage', { replace: true })
     }
   }, [user, navigate])
 
@@ -36,7 +36,7 @@ export default function LoginPage() {
       toast.success('Chào mừng bạn quay lại! 🐾')
       // After login: go to original target, or role-based default
       const currentUser = useAuthStore.getState().user
-      const target = fromPath || (currentUser?.role === 'admin' ? '/admin/courses' : '/student/dashboard')
+      const target = fromPath || (currentUser?.role === 'admin' ? '/admin/courses' : '/student/homepage')
       navigate(target, { replace: true })
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } }).response?.data?.detail || 'Đăng nhập thất bại'

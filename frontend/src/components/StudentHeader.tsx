@@ -19,9 +19,12 @@ export default function StudentHeader({ search, onSearchChange }: StudentHeaderP
 
   return (
     <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-cream-200 shadow-sm">
-      <div className="h-20 max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between gap-4">
-        {/* Logo */}
-        <Link to="/student/homepage" className="flex items-center gap-2 shrink-0 group">
+      <div className="h-20 w-full flex items-center justify-between gap-4 px-3 sm:px-4 lg:px-6">
+        {/* Logo — sát mép trái */}
+        <Link
+          to="/student/homepage"
+          className="flex items-center gap-2 shrink-0 group"
+        >
           <img
             src="/images/icon.png"
             alt="Adaptive Learning"
