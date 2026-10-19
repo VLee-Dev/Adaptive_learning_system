@@ -9,16 +9,6 @@ interface MonthlyStreakCalendarProps {
 
 const WEEKDAY_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
 
-/**
- * Mini calendar dạng tháng (heatmap streak).
- * - Mỗi ô là 1 ngày.
- * - Ngày nào có attempts thì hiển thị icon "dấu chân mèo" (pets) — đậm dần theo số attempts.
- * - Tuần hiện tại (chứa "hôm nay") được highlight bằng viền cam.
- * - "Hôm nay" highlight bằng nền cam đậm.
- * - Tháng trước/sau có nút ← / → để chuyển.
- *
- * Realtime: fetch mỗi lần mount hoặc đổi tháng. Khi user vào trang → data mới nhất.
- */
 export default function MonthlyStreakCalendar({
   year: initYear,
   month: initMonth,

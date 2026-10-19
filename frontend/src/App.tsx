@@ -18,11 +18,11 @@ import HomepageStudent from '@/pages/student/HomepageStudent'
 import StudentCourseCatalogPage from '@/pages/student/StudentCourseCatalogPage'
 import StudentProfilePage from '@/pages/student/StudentProfilePage'
 import StudentCourseDetailPage from '@/pages/student/StudentCourseDetailPage'
+import CourseLearnPage from '@/pages/student/CourseLearnPage'
 import StudentChapterDetailPage from '@/pages/student/StudentChapterDetailPage'
 import StudentTopicDetailPage from '@/pages/student/StudentTopicDetailPage'
 import StudentLessonViewPage from '@/pages/student/StudentLessonViewPage'
 import StudentPracticePage from '@/pages/student/StudentPracticePage'
-import StudentChapterTestPage from '@/pages/student/StudentChapterTestPage'
 
 // Public course detail (task 2: cho cả guest + student xem)
 import CourseDetailPublicPage from '@/pages/course/CourseDetailPublicPage'
@@ -64,6 +64,15 @@ function App() {
         <Route path="/404" element={<NotFoundPage />} />
         {/* Public course detail (task 2) — cả guest + student đều xem được */}
         <Route path="/courses/:courseId" element={<CourseDetailPublicPage />} />
+        {/* Course learn — full screen (header riêng trong page, không qua Layout) */}
+        <Route
+          path="/student/courses/:courseId/learn"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <CourseLearnPage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       {/* Student app pages - with shared layout (no top header, pages provide their own) */}
@@ -109,26 +118,10 @@ function App() {
           }
         />
         <Route
-          path="/student/lessons/:lessonId"
+          path="/student/chapters/:chapterId"
           element={
             <ProtectedRoute requiredRole="student">
-              <StudentLessonViewPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/student/topics/:topicId/practice"
-          element={
-            <ProtectedRoute requiredRole="student">
-              <StudentPracticePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/student/chapters/:chapterId/test"
-          element={
-            <ProtectedRoute requiredRole="student">
-              <StudentChapterTestPage />
+              <StudentChapterDetailPage />
             </ProtectedRoute>
           }
         />

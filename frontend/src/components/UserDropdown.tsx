@@ -1,10 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 
-/**
- * UserDropdown — avatar + tên + dropdown (profile / logout).
- * Dùng trong header chung của student.
- */
 export default function UserDropdown() {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)

@@ -156,7 +156,6 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - PATCH `/admin/courses/7` với `image_url` mới → public `/courses` trả về URL mới.
 
 ### 14/10/2026 - Redesign Neko UI + BKT harden + Course image upload
-
 **Student experience (Neko theme redesign):**
 - Header mới `StudentHeader` (sticky, blur, search + StudyTimer + UserDropdown) — dùng chung cho mọi trang student thông qua `Layout` (homepage tự render để giữ searchAutocomplete).
 - Tách `StudyTimerBadge` + `UserDropdown` ra `components/` riêng (tái sử dụng, không còn nằm inline trong `HomepageStudent`).
@@ -187,18 +186,57 @@ Hệ thống web học trực tuyến thích ứng cho chủ đề bất kỳ do
 - `App.tsx`: route mới `/student/homepage` thay cho `/student/dashboard`.
 - `index.html`: thêm font + meta tags.
 
+### 19/10/2026 - Inline chapter test + cross-item nav + lock-by-practice
+
+**Mục tiêu:** Biến `/learn` thành trải nghiệm học liền mạch — không còn rời trang khi làm bài kiểm tra chương; điều hướng "Quay lại / Tiếp theo" xuyên suốt mọi loại nội dung; chương bị khóa cho tới khi pass hết practice.
+
+**Frontend:**
+- `CourseLearnPage.tsx`:
+  - Tạo mảng phẳng `courseItemsFlat` theo đúng thứ tự sidebar (lesson → practice → chapter test). Mỗi item là 1 bước có thể nhảy tới/lui bằng nút "Quay lại / Tiếp theo" dù khác chương hay khác loại.
+  - `LessonView`, `PracticeView`, `ChapterTestView` đều nhận `prevItem` / `nextItem` / `onNavigateItem`.
+- `LessonView`: đổi nhãn "Bài trước / Bài tiếp theo" → "Quay lại / Tiếp theo".
+- `PracticeView`:
+  - Trong phiên: bỏ nav dưới cùng (chỉ nút Thoát ở header).
+  - Khi mở topic đã `status='completed'`: hiện panel "🎉 Đã hoàn thành" với Mastery %, Level, số lần luyện tập + nút **"Làm lại để luyện tập thêm"**.
+  - Khi hoàn thành phiên: hiện "Quay lại / Tiếp theo" thay vì nút đóng.
+  - Thêm cờ `forceRestart` để fetch lại câu hỏi khi user chọn làm lại.
+- `ChapterTestView` inline (thay thế `ChapterTestRedirectView`):
+  - 4 trạng thái: **Locked** / **Ready** / **In progress** / **Result**.
+  - **Locked**: nếu chapter có topic practice chưa pass → hiện icon 🔒, dòng "Bạn cần hoàn thành tất cả bài luyện tập trong chương này", và chip-link cho từng topic chưa đủ → click nhảy thẳng về practice của topic đó.
+  - Sidebar: hiển thị thêm icon 🔒 cho "Bài kiểm tra chương" bị khóa.
+  - Failed: có nút "Làm lại bài kiểm tra".
+- Helper `chapterPracticeStatus(chapterId)` trả về `{ ready, missing[] }` dựa trên `masteries[topicId].status === 'completed'`.
+- `App.tsx`: xóa route `/student/chapters/:chapterId/test`.
+- Xóa file `frontend/src/pages/student/StudentChapterTestPage.tsx` (đã được nhúng inline).
+- Cập nhật link cũ tới chapter test trong `StudentCourseDetailPage`, `StudentChapterDetailPage`, `StudentCourseLearnPage` → trỏ về `/student/courses/:courseId/learn?tab=test&chapter=:chapterId`.
+
+**Quyết định kiến trúc:**
+- Chapter Test không có route riêng nữa — mọi flow đều quanh `/learn` để giữ ngữ cảnh học tập (timer, sidebar, mastery context).
+- Practice "đã pass" không bị ẩn, vẫn cho phép làm lại để luyện tập thêm (không reset mastery).
+- Lock-by-practice dùng mastery status (đồng bộ với backend) chứ không tự check `completion_rate` client-side.
+
+**Cách dùng:**
+1. Mở `/student/courses/:id/learn` → sidebar hiện 🔒 cạnh "Bài kiểm tra chương" nếu practice chưa đủ.
+2. Click chapter test khi khóa → panel trung tâm hiện danh sách topic chưa pass, click vào chip để nhảy về practice.
+3. Click chapter test khi đã mở → vào thẳng flow làm bài (4 trạng thái). Failed → "Làm lại". Pass → tiếp tục sang chương sau.
+4. Mở lại topic đã pass → panel "Đã hoàn thành" + "Làm lại để luyện tập thêm".
+
 ### Trạng thái hiện tại
 
-**Hoàn thành (tính đến 14/10/2026):**
+**Hoàn thành (tính đến 19/10/2026):**
 - Database (20 bảng) với BKT support — head migration `add_is_active_and_is_archived`
 - Auth/JWT với role-based access
 - **API endpoints** (Auth + Content + Enrollment + Admin + Learning + Uploads)
 - BKT algorithm + Mastery model tách package riêng (`app/mastery/`)
 - Chapter test với slot/pool system
-- **Frontend hoàn chỉnh: 17+ trang (3 Auth + 8 Student + 9 Admin + shared) với Neko theme**
+- **Frontend hoàn chỉnh: 16+ trang (3 Auth + 7 Student + 9 Admin + shared) với Neko theme**
 - **StudentHeader + StudyTimerBadge + UserDropdown + ImageUploader + AdminLayout + ErrorBoundary + Toaster**
 - **adminApi.ts với typed helpers + upload API**
 - **Course image upload end-to-end (admin upload → static serve → student display)**
+- **Inline chapter test trong `/learn`** (xóa route riêng `/student/chapters/:id/test`)
+- **Cross-item nav** (Quay lại / Tiếp theo xuyên suốt lesson → practice → chapter test)
+- **Chapter test khóa theo practice** (chưa pass hết practice → không mở được bài kiểm tra chương)
+- **Practice "đã pass" hiển thị + nút làm lại** (giữ mastery, chỉ fetch câu mới)
 - **Full integration: UI ↔ API ↔ Database**
 
 
@@ -265,10 +303,10 @@ frontend/src/
   stores/          # Zustand: authStore
   pages/
     auth/          # Landing, Login, Register, 404, 403
-    student/       # Dashboard, Course list/detail, Chapter, Topic, Lesson, Practice, Test
+    student/       # Dashboard, Course list/detail, Chapter, Topic, Lesson, Practice, Learn (test inline)
     admin/         # Dashboard, Course CRUD, Chapter, Topic, Lesson/Question editor, Practice config, Final test builder
     ProfilePage.tsx
-  App.tsx          # Định tuyến tất cả 26 routes
+  App.tsx          # Định tuyến các routes (chapter test đã nhúng inline trong /learn)
   main.tsx
   index.css        # Tailwind base + utility classes (.btn-primary, .card, .input, ...)
 ```

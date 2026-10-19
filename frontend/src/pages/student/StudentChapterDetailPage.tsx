@@ -181,7 +181,7 @@ export default function StudentChapterDetailPage() {
               Điểm: {completion.test_score_percent?.toFixed(0)}% · {completion.completed_at}
             </div>
             <Link
-              to={`/student/chapters/${chapterIdNum}/test`}
+              to={`/student/courses/${chapter?.course_id ?? ''}/learn?tab=test&chapter=${chapterIdNum}`}
               className="mt-3 inline-block px-4 py-2 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700"
             >
               Làm lại
@@ -189,7 +189,7 @@ export default function StudentChapterDetailPage() {
           </div>
         ) : (
           <Link
-            to={`/student/chapters/${chapterIdNum}/test`}
+            to={`/student/courses/${chapter?.course_id ?? ''}/learn?tab=test&chapter=${chapterIdNum}`}
             className={`inline-block px-5 py-2 rounded-xl text-white font-semibold ${
               allTopicsDone
                 ? 'bg-orange-600 hover:bg-orange-700'

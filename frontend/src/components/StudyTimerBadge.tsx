@@ -11,11 +11,8 @@ function formatTimer(totalSec: number): string {
 const STORAGE_KEY = 'study_timer_v1'
 
 interface TimerState {
-  /** YYYY-MM-DD của ngày đang đếm */
   dateKey: string
-  /** Timestamp (ms) lúc bắt đầu tính giây trong ngày đó */
   startedAt: number
-  /** Tổng số giây đã pause trong ngày (cộng dồn) */
   pausedSeconds: number
 }
 

@@ -1,14 +1,3 @@
-// CourseDetailPublicPage — trang chi tiết khóa học PUBLIC (không cần login).
-//
-// Khi chưa login:
-//   - "Xem chi tiết" / "Đăng ký" → vẫn xem được trang này
-//   - "Đăng ký" → redirect /login?return=/courses/:id
-// Khi đã login (role student):
-//   - "Đăng ký" → gọi API enroll, ở lại trang public
-//   - Sau khi enrolled → nút đổi thành "Đã đăng ký" + nút mũi tên "Vào học ngay"
-//   - Click "Vào học ngay" / nút mũi tên → /student/courses/:id (trang student mới có nội dung học)
-//
-// Tham khảo: Frontend-example.MD task 2
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { courseApi, type CourseDetail, resolveImageUrl, toApiError } from '@/lib/api'
@@ -36,7 +25,6 @@ export default function CourseDetailPublicPage() {
 
   const handleEnroll = async () => {
     if (!user) {
-      // Guest: chuyển sang login, sau login quay lại trang này
       navigate(`/login?return=/courses/${courseIdNum}`)
       return
     }
@@ -49,7 +37,6 @@ export default function CourseDetailPublicPage() {
     setError(null)
     try {
       await courseApi.enroll(course.id)
-      // Reload để cập nhật is_enrolled (giữ nguyên trang public)
       const updated = await courseApi.detail(course.id)
       setCourse(updated)
     } catch (e) {
@@ -59,9 +46,8 @@ export default function CourseDetailPublicPage() {
     }
   }
 
-  // Nút "Quay lại" — student → /student/homepage, guest → /
   const backHref = user?.role === 'student' ? '/student/homepage' : '/'
-  const backLabel = user?.role === 'student' ? '← Quay lại' : '← Trang chủ'
+  const backLabel = user?.role === 'student' ? 'Quay lại' : 'Trang chủ'
 
   if (loading) {
     return (
