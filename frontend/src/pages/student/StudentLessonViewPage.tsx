@@ -18,6 +18,8 @@ interface Topic {
   chapter_id: number
   name: string
   description: string | null
+  // FE cần course_id để dựng link tới trang học (route practice cũ đã bị gỡ).
+  course_id?: number
 }
 
 interface LessonSummary {
@@ -185,7 +187,7 @@ export default function StudentLessonViewPage() {
               </button>
             ) : (
               <Link
-                to={`/student/topics/${topic.id}/practice`}
+                to={`/student/courses/${topic.course_id ?? 0}/learn?tab=practice&topic=${topic.id}`}
                 className="bg-green-600 text-white px-6 py-2 rounded-xl hover:bg-green-700 font-medium transition shadow-md shadow-green-500/25"
               >
                 Luyện tập chủ đề này →
@@ -237,7 +239,7 @@ export default function StudentLessonViewPage() {
           {/* Practice Button in Sidebar */}
           <div className="p-4 border-t border-cream-200">
             <Link
-              to={`/student/topics/${topic.id}/practice`}
+              to={`/student/courses/${topic.course_id ?? 0}/learn?tab=practice&topic=${topic.id}`}
               className="block w-full bg-orange-600 text-white text-center py-3 rounded-xl hover:bg-orange-700 font-medium transition shadow-md shadow-orange-500/25"
             >
               🎯 Luyện tập ngay

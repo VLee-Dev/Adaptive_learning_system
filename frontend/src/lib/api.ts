@@ -141,7 +141,21 @@ export interface StopStudySessionResponse {
   ended_at: string
 }
 
+export interface EnrollmentProgress {
+  course_id: number
+  course_name: string
+  /** 0–100, % chapter đã hoàn thành. */
+  progress: number
+  completed: boolean
+  /** ISO 8601 UTC — thời điểm học gần nhất, null nếu chưa có. */
+  last_accessed: string | null
+}
+
 export const learningApi = {
+  /** Danh sách khóa học đang đăng ký kèm tiến độ thật + hoàn thành hay chưa. */
+  getEnrollments: () =>
+    api.get<EnrollmentProgress[]>('/learning/enrollments').then((r) => r.data),
+
   /** Mini calendar: lịch học theo tháng (đơn vị phút), theo giờ local user.
    *  - tzOffsetMinutes: new Date().getTimezoneOffset() (vd Việt Nam = -420)
    */

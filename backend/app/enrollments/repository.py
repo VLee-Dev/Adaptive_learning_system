@@ -1,11 +1,13 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.attempts.model import Attempt
 from app.chapters.model import Chapter
 from app.completions.model import ChapterCompletion, CourseCompletion
 from app.courses.model import Course
 from app.enrollments.model import CourseEnrollment
 from app.learning_events.model import LearningEvent
+from app.study_sessions.model import StudySession
 from app.topics.model import Topic
 
 
@@ -72,16 +74,38 @@ def list_enrollments_for_user(db: Session, user_id: int) -> list[dict]:
             )
         ) is not None
 
-        # Last accessed: max(LearningEvent.created_at) for topics trong course
-        last_accessed = db.scalar(
-            select(func.max(LearningEvent.created_at))
-            .join(Topic, Topic.id == LearningEvent.topic_id)
-            .join(Chapter, Chapter.id == Topic.chapter_id)
-            .where(
+        # Last accessed: mốc thời gian user tương tác gần nhất với course.
+        # Lấy max trên 3 nguồn vì mỗi nguồn có thể rỗng tùy cách user học:
+        #   1. learning_events  — event học tập (answer / remedial / ai_explanation)
+        #   2. attempts         — user trả lời câu hỏi
+        #   3. study_sessions   — mở trang practice / chapter-test
+        topic_ids_in_course = select(Topic.id).where(Topic.chapter_id.in_(
+            select(Chapter.id).where(Chapter.course_id == course.id)
+        ))
+
+        last_event = db.scalar(
+            select(func.max(LearningEvent.created_at)).where(
                 LearningEvent.user_id == user_id,
-                Chapter.course_id == course.id,
+                LearningEvent.topic_id.in_(topic_ids_in_course),
             )
         )
+        last_attempt = db.scalar(
+            select(func.max(Attempt.created_at)).where(
+                Attempt.user_id == user_id,
+                Attempt.topic_id.in_(topic_ids_in_course),
+            )
+        )
+        # StudySession.reference_id là topic_id (kind='practice') → dùng để
+        # suy ra course qua topic.
+        last_session = db.scalar(
+            select(func.max(StudySession.started_at)).where(
+                StudySession.user_id == user_id,
+                StudySession.reference_id.in_(topic_ids_in_course),
+            )
+        )
+
+        candidates = [t for t in (last_event, last_attempt, last_session) if t is not None]
+        last_accessed = max(candidates) if candidates else None
 
         results.append({
             "course_id": course.id,

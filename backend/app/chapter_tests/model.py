@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Table, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.database import Base
+from core.database import Base, utcnow
 
 if TYPE_CHECKING:
     from app.chapters.model import Chapter
@@ -33,7 +33,7 @@ class ChapterFinalTest(Base):
     total_questions: Mapped[int] = mapped_column(Integer, nullable=False)
     pass_percent: Mapped[float] = mapped_column(Float, default=70.0, nullable=False)
     max_attempts: Mapped[int | None] = mapped_column(Integer)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
     chapter: Mapped["Chapter"] = relationship(back_populates="final_test")
     slots: Mapped[list["ChapterTestSlot"]] = relationship(back_populates="test", cascade="all, delete-orphan", order_by="ChapterTestSlot.slot_index")

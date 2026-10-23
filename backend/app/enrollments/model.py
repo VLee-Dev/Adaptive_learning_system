@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, Enum as SqlEnum, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.database import Base
+from core.database import Base, utcnow
 
 if TYPE_CHECKING:
     from app.courses.model import Course
@@ -25,7 +25,7 @@ class CourseEnrollment(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     course_id: Mapped[int] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
     status: Mapped[EnrollmentStatus] = mapped_column(SqlEnum(EnrollmentStatus, name="enrollment_status", values_callable=lambda enum: [item.value for item in enum]), default=EnrollmentStatus.ACTIVE, nullable=False)
-    enrolled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    enrolled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     user: Mapped["User"] = relationship(back_populates="enrollments")

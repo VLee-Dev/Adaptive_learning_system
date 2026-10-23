@@ -3,12 +3,17 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import api, { toApiError } from '@/lib/api'
 import { useStudySession } from '@/hooks/useStudySession'
+import ReviewBanner, { type ReviewProgress } from '@/components/ReviewBanner'
 
 interface PracticeQuestion {
   question_id: number
   text: string
   options: string[]
   level: number
+  // C2: vì sao chọn câu này
+  selection_reason?: string | null
+  // true nếu đang ôn lại câu đã làm trước đó
+  is_retry?: boolean
 }
 
 interface NextResponse {
@@ -19,6 +24,11 @@ interface NextResponse {
   current_level: number
   status: 'in_progress' | 'completed' | 'review_required'
   next_question: PracticeQuestion | null
+  // C2: lý do không có câu tiếp theo
+  selection_note?: string | null
+  // B3
+  review_progress?: ReviewProgress
+  suggested_lesson_id?: number | null
 }
 
 interface TopicMastery {
@@ -27,6 +37,7 @@ interface TopicMastery {
   mastery: number
   current_level: number
   status: 'in_progress' | 'completed' | 'review_required'
+  review_progress?: ReviewProgress
 }
 
 const STATUS_LABEL: Record<NextResponse['status'], { label: string; color: string; emoji: string }> = {
@@ -48,8 +59,14 @@ export default function StudentPracticePage() {
     mastery: number
     level: number
     status: NextResponse['status']
+    reviewProgress?: ReviewProgress
+    suggestedLessonId?: number | null
   } | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
+  // C2: ghi chú khi không có câu hỏi phù hợp
+  const [selectionNote, setSelectionNote] = useState<string | null>(null)
+  // B3: bài giảng được đề xuất để ôn lại
+  const [suggestedLessonId, setSuggestedLessonId] = useState<number | null>(null)
 
   // Đo thời gian học thực tế → cập nhật calendar "Lịch học của bạn"
   useStudySession({
@@ -92,8 +109,12 @@ export default function StudentPracticePage() {
         mastery: r.data.updated_mastery,
         level: r.data.current_level,
         status: r.data.status,
+        reviewProgress: r.data.review_progress,
+        suggestedLessonId: r.data.suggested_lesson_id ?? null,
       })
       setQuestion(r.data.next_question)
+      setSelectionNote(r.data.selection_note ?? null)
+      setSuggestedLessonId(r.data.suggested_lesson_id ?? null)
       setSelected(null)
     } catch (e) {
       setError(toApiError(e).detail)
@@ -202,6 +223,25 @@ export default function StudentPracticePage() {
         </div>
       )}
 
+      {/* B3: Banner "Cần ôn lại" */}
+      {(lastResult?.status === 'review_required' || topic?.status === 'review_required') && (
+        <ReviewBanner
+          topicId={topicIdNum}
+          progress={lastResult?.reviewProgress ?? topic?.review_progress}
+          suggestedLessonId={suggestedLessonId ?? lastResult?.suggestedLessonId ?? null}
+          onOpenLesson={(lessonId) => {
+            window.location.href = `/student/lessons/${lessonId}`
+          }}
+        />
+      )}
+
+      {/* C2: Ghi chú khi không tìm được câu hỏi phù hợp */}
+      {selectionNote && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+          ℹ️ {selectionNote}
+        </div>
+      )}
+
       {/* Last result feedback */}
       {lastResult && (
         <div
@@ -228,7 +268,15 @@ export default function StudentPracticePage() {
       {/* Current question */}
       {question && (
         <div className="bg-[#FFFDF9]/90 backdrop-blur border border-cream-200 rounded-2xl p-6 shadow-cozy">
-          <div className="text-xs text-stone-500 mb-2">Level {question.level}</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs text-stone-500">Level {question.level}</div>
+            {question.selection_reason && (
+              <div className="text-xs text-orange-600 font-medium">
+                {question.is_retry ? '🔁 ' : '🎯 '}
+                {question.selection_reason}
+              </div>
+            )}
+          </div>
           <h2 className="text-lg font-bold text-cream-900 mb-4">{question.text}</h2>
           <div className="space-y-2">
             {question.options.map((opt, i) => {

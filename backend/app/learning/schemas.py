@@ -23,6 +23,16 @@ class QuestionResponse(BaseModel):
     options: list[str]
     level: int
     stimulus_id: int | None = None
+    # C2: giải thích vì sao chọn câu này (ưu tiên câu hay sai, tránh lặp...)
+    selection_reason: str | None = None
+    # True nếu đây là câu user đã làm trước đó (đang ôn lại)
+    is_retry: bool = False
+
+
+class QuestionSelection(BaseModel):
+    """Kết quả chọn câu hỏi: câu được chọn + ghi chú khi không có câu phù hợp."""
+    question: QuestionResponse | None = None
+    note: str | None = None
 
 
 class AnswerSubmitRequest(BaseModel):
@@ -40,6 +50,12 @@ class AnswerSubmitResponse(BaseModel):
     current_level: int
     status: str  # "in_progress", "completed", "review_required"
     next_question: QuestionResponse | None = None
+    # C2: lý do không có câu tiếp theo (bank hết câu phù hợp)
+    selection_note: str | None = None
+    # B3: tiến độ thoát trạng thái review (xem bài giảng + số câu đúng liên tiếp)
+    review_progress: dict = Field(default_factory=dict)
+    # B3: bài giảng nên đọc khi bị yêu cầu ôn lại (None nếu topic không có bài giảng)
+    suggested_lesson_id: int | None = None
 
 
 class TopicMasteryResponse(BaseModel):
@@ -50,6 +66,13 @@ class TopicMasteryResponse(BaseModel):
     current_level: int
     practice_attempts: int
     status: str
+    # A2: bằng chứng quan sát được (mastery là ước lượng, không phải trạng thái)
+    correct_count: int = 0
+    wrong_count: int = 0
+    consecutive_correct: int = 0
+    consecutive_wrong: int = 0
+    recent_accuracy: float = 0.0
+    review_progress: dict = Field(default_factory=dict)
 
     class Config:
         from_attributes = True

@@ -50,6 +50,11 @@ class TopicSummary(BaseModel):
     description: str | None
     type: TopicType
     order_index: int
+    # FE cần course_id để dựng link tới trang học
+    # (/student/courses/:courseId/learn?tab=practice&topic=:id) sau khi
+    # route /student/topics/:topicId/practice bị gỡ.
+    # KHÔNG lấy từ ORM vì Topic chỉ có chapter_id — phải join qua Chapter.
+    course_id: int = 0
 
 
 class LessonSummary(BaseModel):

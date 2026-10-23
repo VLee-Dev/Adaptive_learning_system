@@ -47,6 +47,16 @@ export default {
       backgroundImage: {
         landscape: "url('/images/landscaping.png')",
       },
+      keyframes: {
+        // Chuyển slide của EnrolledCoursesSlider
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translateX(12px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 0.45s ease-out',
+      },
     },
   },
   plugins: [],

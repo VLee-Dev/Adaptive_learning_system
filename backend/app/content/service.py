@@ -5,7 +5,7 @@ from app.content.repository import (
     list_chapters_by_course, list_lessons_by_topic, list_published_courses,
     list_topics_by_chapter,
 )
-from app.content.schemas import CourseDetail
+from app.content.schemas import CourseDetail, TopicSummary
 from app.enrollments.model import CourseEnrollment
 from sqlalchemy import select, func
 
@@ -83,6 +83,20 @@ def get_topic_lessons(db: Session, topic_id: int):
     if get_topic_by_id(db, topic_id) is None:
         raise LookupError("Topic not found")
     return list_lessons_by_topic(db, topic_id)
+
+
+def topic_to_summary(topic) -> "TopicSummary":
+    """Chuyển ORM Topic → TopicSummary, có gắn course_id qua chapter."""
+    course_id = topic.chapter.course_id if topic.chapter else 0
+    return TopicSummary(
+        id=topic.id,
+        chapter_id=topic.chapter_id,
+        name=topic.name,
+        description=topic.description,
+        type=topic.type,
+        order_index=topic.order_index,
+        course_id=course_id,
+    )
 
 
 def get_lesson_detail(db: Session, lesson_id: int):

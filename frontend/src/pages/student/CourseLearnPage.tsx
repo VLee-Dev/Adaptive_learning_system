@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import StudentHeader from '@/components/StudentHeader'
+import ReviewBanner from '@/components/ReviewBanner'
 import api, {
   courseApi,
   toApiError,
@@ -28,6 +29,8 @@ interface TopicSummary {
   description: string | null
   type: 'general' | 'grammar' | 'listening'
   order_index: number
+  // Bổ sung 2026-10-23: FE cần course_id để dựng link tới trang học
+  course_id?: number
 }
 interface LessonSummary {
   id: number
@@ -57,6 +60,23 @@ interface TopicMastery {
   current_level: number
   practice_attempts: number
   status: 'in_progress' | 'completed' | 'review_required'
+  // A2: bằng chứng quan sát được
+  correct_count?: number
+  wrong_count?: number
+  consecutive_correct?: number
+  consecutive_wrong?: number
+  recent_accuracy?: number
+  review_progress?: ReviewProgress
+}
+
+/** B3: tiến độ thoát trạng thái review_required */
+interface ReviewProgress {
+  lesson_required: boolean
+  lesson_completed: boolean
+  correct_required: number
+  correct_done: number
+  consecutive_wrong: number
+  recent_accuracy: number
 }
 
 // === Practice types ===
@@ -65,6 +85,10 @@ interface PracticeQuestion {
   text: string
   options: string[]
   level: number
+  // C2: vì sao chọn câu này
+  selection_reason?: string | null
+  // true nếu đang ôn lại câu đã làm trước đó
+  is_retry?: boolean
 }
 interface NextResponse {
   is_correct?: boolean
@@ -74,6 +98,11 @@ interface NextResponse {
   current_level: number
   status: 'in_progress' | 'completed' | 'review_required'
   next_question: PracticeQuestion | null
+  // C2: lý do không có câu tiếp theo
+  selection_note?: string | null
+  // B3
+  review_progress?: ReviewProgress
+  suggested_lesson_id?: number | null
 }
 
 const LESSON_TYPE_ICON: Record<string, string> = {
@@ -95,7 +124,7 @@ const STATUS_META: Record<NextResponse['status'], { label: string; color: string
 
 type ContentView =
   | { type: 'lesson'; lessonId: number }
-  | { type: 'practice'; topicId: number }
+  | { type: 'practice'; topicId: number; chapterId: number }
   | { type: 'chapterTest'; chapterId: number }
 
 export default function CourseLearnPage() {
@@ -197,7 +226,8 @@ export default function CourseLearnPage() {
           const topicParam = searchParams.get('topic')
 
           if (tab === 'practice' && topicParam) {
-            setContentView({ type: 'practice', topicId: Number(topicParam) })
+            const tid = Number(topicParam)
+            setContentView({ type: 'practice', topicId: tid, chapterId: findChapterIdForTopic(tid) })
           } else if (tab === 'test' && chapterParam) {
             setContentView({ type: 'chapterTest', chapterId: Number(chapterParam) })
           } else if (lessonId) {
@@ -235,7 +265,7 @@ export default function CourseLearnPage() {
     setSearchParams({ lesson: String(lessonId) })
   }
   const handlePracticeClick = (topicId: number) => {
-    setContentView({ type: 'practice', topicId })
+    setContentView({ type: 'practice', topicId, chapterId: findChapterIdForTopic(topicId) })
     setSearchParams({ tab: 'practice', topic: String(topicId) })
   }
   const handleChapterTestClick = (chapterId: number) => {
@@ -253,6 +283,14 @@ export default function CourseLearnPage() {
       (t) => (masteries[t.id]?.status ?? 'in_progress') !== 'completed',
     )
     return { ready: missing.length === 0, missing }
+  }
+
+  /** Tìm chapter chứa topic — dùng khi mở practice từ URL param hoặc link ngoài. */
+  const findChapterIdForTopic = (topicId: number): number => {
+    for (const [chapterId, topics] of Object.entries(topicsByChapter)) {
+      if (topics.some((t) => t.id === topicId)) return Number(chapterId)
+    }
+    return 0
   }
 
   if (loading) {
@@ -295,7 +333,7 @@ export default function CourseLearnPage() {
       setContentView({ type: 'lesson', lessonId: item.id })
       setSearchParams({ lesson: String(item.id) })
     } else if (item.type === 'practice') {
-      setContentView({ type: 'practice', topicId: item.topicId })
+      setContentView({ type: 'practice', topicId: item.topicId, chapterId: item.chapterId })
       setSearchParams({ tab: 'practice', topic: String(item.topicId) })
     } else {
       setContentView({ type: 'chapterTest', chapterId: item.chapterId })
@@ -547,6 +585,7 @@ export default function CourseLearnPage() {
           ) : contentView.type === 'practice' ? (
             <PracticeView
               topicId={contentView.topicId}
+              chapterId={contentView.chapterId}
               prevItem={prevItem}
               nextItem={nextItem}
               onNavigateItem={goToItem}
@@ -601,6 +640,7 @@ interface LessonViewProps {
 }
 interface PracticeViewProps {
   topicId: number
+  chapterId: number
   prevItem: CourseItem | null
   nextItem: CourseItem | null
   onNavigateItem: (item: CourseItem) => void
@@ -771,6 +811,7 @@ function LessonView({
 // =============================
 function PracticeView({
   topicId,
+  chapterId,
   prevItem,
   nextItem,
   onNavigateItem,
@@ -787,12 +828,18 @@ function PracticeView({
     mastery: number
     level: number
     status: NextResponse['status']
+    reviewProgress?: ReviewProgress
+    suggestedLessonId?: number | null
   } | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [forceRestart, setForceRestart] = useState(false)
+  // C2: ghi chú khi không có câu hỏi phù hợp
+  const [selectionNote, setSelectionNote] = useState<string | null>(null)
+  // B3: bài giảng được đề xuất để ôn lại
+  const [suggestedLessonId, setSuggestedLessonId] = useState<number | null>(null)
 
   useEffect(() => {
     if (!topicId) return
@@ -829,8 +876,12 @@ function PracticeView({
         mastery: r.data.updated_mastery,
         level: r.data.current_level,
         status: r.data.status,
+        reviewProgress: r.data.review_progress,
+        suggestedLessonId: r.data.suggested_lesson_id ?? null,
       })
       setQuestion(r.data.next_question)
+      setSelectionNote(r.data.selection_note ?? null)
+      setSuggestedLessonId(r.data.suggested_lesson_id ?? null)
       setSelected(null)
     } catch (e) {
       setError(toApiError(e).detail)
@@ -1056,10 +1107,42 @@ function PracticeView({
         </div>
       )}
 
+      {/* B3: Banner "Cần ôn lại" — hướng dẫn user thoát trạng thái review */}
+      {(lastResult?.status === 'review_required' || topic?.status === 'review_required') && (
+        <ReviewBanner
+          topicId={topicId}
+          progress={lastResult?.reviewProgress ?? topic?.review_progress}
+          suggestedLessonId={suggestedLessonId ?? lastResult?.suggestedLessonId ?? null}
+            onOpenLesson={(lessonId) =>
+              onNavigateItem({
+                type: 'lesson',
+                id: lessonId,
+                topicId,
+                chapterId,
+              })
+            }
+        />
+      )}
+
+      {/* C2: Ghi chú khi hệ thống không tìm được câu hỏi phù hợp */}
+      {selectionNote && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+          ℹ️ {selectionNote}
+        </div>
+      )}
+
       {/* Current question */}
       {question && (
         <div className="bg-[#FFFDF9]/90 backdrop-blur border border-cream-200 rounded-2xl p-6 shadow-cozy">
-          <div className="text-xs text-stone-500 mb-2">Level {question.level}</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs text-stone-500">Level {question.level}</div>
+            {question.selection_reason && (
+              <div className="text-xs text-orange-600 font-medium">
+                {question.is_retry ? '🔁 ' : '🎯 '}
+                {question.selection_reason}
+              </div>
+            )}
+          </div>
           <h2 className="text-lg font-bold text-cream-900 mb-4">{question.text}</h2>
           <div className="space-y-2">
             {question.options.map((opt, i) => {

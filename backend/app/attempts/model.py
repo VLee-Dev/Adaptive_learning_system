@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.database import Base
+from core.database import Base, utcnow
 
 if TYPE_CHECKING:
     from app.learning_events.model import LearningEvent
@@ -22,7 +22,7 @@ class Attempt(Base):
     topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id", ondelete="CASCADE"), nullable=False)
     selected_answer: Mapped[str] = mapped_column(String(255), nullable=False)
     is_correct: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="attempts")
     question: Mapped["Question"] = relationship(back_populates="attempts", foreign_keys=[question_id])

@@ -7,6 +7,7 @@ from app.enrollments.model import CourseEnrollment
 from app.lessons.model import Lesson
 from app.mastery.model import TopicMastery
 from app.questions.model import Question
+from app.questions.stat_model import QuestionStat
 from app.recommendations.model import Recommendation
 from app.stimuli.model import Stimulus
 from app.study_sessions.model import StudySession
@@ -22,5 +23,5 @@ __all__ = [
     "ChapterTestPool", "ChapterTestSlot", "Course", "CourseCompletion",
     "CourseEnrollment", "LearningEvent", "Lesson",
     "Question", "Recommendation", "Stimulus", "StudySession",
-    "Topic", "TopicMastery", "User",
+    "Topic", "TopicMastery", "User", "QuestionStat",
 ]

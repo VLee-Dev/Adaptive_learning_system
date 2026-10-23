@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, DateTime, Enum as SqlEnum, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.database import Base
+from core.database import Base, utcnow
 
 if TYPE_CHECKING:
     from app.chapters.model import Chapter
@@ -37,7 +37,7 @@ class Topic(Base):
     p_guess: Mapped[float] = mapped_column(Float, default=0.25, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_archived: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
     chapter: Mapped["Chapter"] = relationship(back_populates="topics")
     lessons: Mapped[list["Lesson"]] = relationship(back_populates="topic", cascade="all, delete-orphan", order_by="Lesson.order_index")

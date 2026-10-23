@@ -58,6 +58,11 @@ export function useStudySession({
     startTimeRef.current = startTime
     lastInteractionRef.current = startTime
     activeMsRef.current = 0
+    // Reset guard mỗi lần effect chạy — nếu không, session thứ 2 sẽ bị
+    // stopNow() no-op ngay (stoppedRef vẫn true từ lần trước) và không bao
+    // giờ đóng được → tích tụ session mồ côi trong DB.
+    stoppedRef.current = false
+    sessionIdRef.current = null
 
     // Start session
     learningApi

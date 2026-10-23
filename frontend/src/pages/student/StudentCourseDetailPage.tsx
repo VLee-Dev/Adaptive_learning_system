@@ -763,7 +763,7 @@ function ChapterView({
                 {/* Thanh luyện tập (theo topic) */}
                 <div className="border-t border-cream-200">
                   <Link
-                    to={`/student/topics/${t.id}/practice`}
+                    to={`/student/courses/${chapter.course_id ?? courseId}/learn?tab=practice&topic=${t.id}`}
                     className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-orange-50/60 to-cream-50/60 hover:from-orange-100 hover:to-cream-100 transition-colors group"
                   >
                     <div className="flex items-center gap-2 min-w-0">

@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { resolveImageUrl } from '@/lib/api'
 import StudentHeader from '@/components/StudentHeader'
 import MonthlyStreakCalendar from '@/components/MonthlyStreakCalendar'
+import EnrolledCoursesSlider from '@/components/EnrolledCoursesSlider'
 
 // ----- Helpers ---------------------------------------------------------------
 function greetingByHour(date = new Date()): { text: string; emoji: string } {
@@ -82,74 +83,6 @@ function SearchAutocomplete({
           <span className="material-symbols-outlined text-stone-400 text-[18px]">arrow_forward</span>
         </button>
       ))}
-    </div>
-  )
-}
-
-/** Card lớn primary cho "khóa học đang học" */
-function PrimaryCourseCard({ course }: { course: CourseSummary }) {
-  const progress = 0
-  const totalLessons = 25
-  const completedLessons = 0
-  return (
-    <div className="bg-white/90 backdrop-blur-md border border-cream-200 rounded-3xl p-6 lg:p-8 shadow-sm flex flex-col justify-between relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-orange-100/50 via-cream-100/20 to-transparent rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
-      <div className="space-y-6 relative z-10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 flex-1">
-            <div className="inline-block px-2.5 py-0.5 rounded-lg bg-cream-100 text-stone-700 text-xs font-semibold">
-              Đang học
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-stone-800 tracking-tight">{course.name}</h3>
-            <p className="text-sm text-stone-600">
-              {course.description || 'Tiếp tục hành trình học tập của bạn.'}
-            </p>
-          </div>
-          <div className="relative w-36 h-28 shrink-0 rounded-2xl overflow-hidden shadow-sm group">
-            {course.image_url ? (
-              <img
-                src={resolveImageUrl(course.image_url) ?? ''}
-                alt={course.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-orange-200 to-orange-400 flex items-center justify-center text-5xl">
-                📚
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="space-y-2 bg-cream-50 rounded-2xl p-4">
-          <div className="flex items-center justify-between text-sm font-semibold">
-            <span className="text-stone-800 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-orange-600 text-[18px]">timelapse</span>
-              Tiến độ hoàn thành: <strong className="text-orange-600 font-bold">{progress}%</strong>
-            </span>
-            <span className="text-stone-500 text-xs">
-              {completedLessons}/{totalLessons} bài học (TODO)
-            </span>
-          </div>
-          <div className="w-full h-3 rounded-full bg-cream-200 overflow-hidden p-0.5">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-600 transition-all duration-700 relative"
-              style={{ width: `${progress}%` }}
-            >
-              <div className="absolute right-0 top-0 bottom-0 w-2 bg-white/40 rounded-full animate-pulse" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="pt-6 mt-4 border-t border-cream-200 flex flex-wrap items-center justify-between gap-4 relative z-10">
-        <div className="flex items-center">
-          <Link
-            to={`/student/courses/${course.id}`}
-            className="px-6 py-3 rounded-full bg-orange-600 text-white font-semibold hover:bg-orange-700 transition-all flex items-center gap-2 shadow-md shadow-orange-500/25 active:scale-95"
-          >
-            <span className="material-symbols-outlined text-[20px]">play_circle</span>
-            <span>🐾 Tiếp tục học</span>
-          </Link>
-        </div>
-      </div>
     </div>
   )
 }
@@ -267,7 +200,6 @@ export default function HomepageStudent() {
       .slice(0, 8)
   }, [search, allCourses, enrolled])
 
-  const primaryCourse = enrolled[0]
   const featured = allCourses.slice(0, 4)
 
   return (
@@ -317,12 +249,6 @@ export default function HomepageStudent() {
               <div className="flex items-center gap-2.5">
                 <span className="material-symbols-outlined text-orange-600 text-[22px]">auto_stories</span>
                 <h2 className="text-xl sm:text-2xl font-bold text-stone-800">Khóa học bạn đang học</h2>
-                {primaryCourse && (
-                  <span className="px-2.5 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-semibold flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-orange-600 animate-pulse" />
-                    Đang diễn ra
-                  </span>
-                )}
               </div>
               <Link
                 to="/student/courses"
@@ -334,22 +260,7 @@ export default function HomepageStudent() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">
               <div className="lg:col-span-2">
-                {primaryCourse ? (
-                  <PrimaryCourseCard course={primaryCourse} />
-                ) : (
-                  <div className="bg-white/90 backdrop-blur-md border border-cream-200 rounded-3xl p-6 lg:p-8 shadow-sm flex items-center justify-center min-h-[280px]">
-                    <div className="text-center">
-                      <div className="text-6xl mb-3">📚</div>
-                      <p className="text-stone-600">Bạn chưa đăng ký khóa học nào.</p>
-                      <Link
-                        to="/student/courses"
-                        className="mt-4 inline-block px-4 py-2 rounded-xl bg-orange-600 text-white font-semibold hover:bg-orange-700 transition"
-                      >
-                        Khám phá khóa học
-                      </Link>
-                    </div>
-                  </div>
-                )}
+                <EnrolledCoursesSlider />
               </div>
               <div className="lg:col-span-1">
                 <MonthlyStreakCalendar />

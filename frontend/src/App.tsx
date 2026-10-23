@@ -117,6 +117,29 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* B3/C2: route bài học độc lập — dùng cho "xem lại bài giảng" khi
+            đang ở trạng thái review_required. Trước đây route này bị gỡ
+            ở commit aab09e1 nhưng link vẫn còn → 404. */}
+        <Route
+          path="/student/lessons/:lessonId"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <StudentLessonViewPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Route luyện tập cũ — giữ lại để các link/bookmark cũ không chết.
+            Thực chất nội dung luyện tập giờ render inline trong
+            /student/courses/:courseId/learn?tab=practice&topic=:id
+            (xem commit aab09e1). */}
+        <Route
+          path="/student/topics/:topicId/practice"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <StudentPracticePage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/student/chapters/:chapterId"
           element={

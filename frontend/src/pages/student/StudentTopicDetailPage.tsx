@@ -10,6 +10,9 @@ interface TopicSummary {
   description: string | null
   type: string
   order_index: number
+  // FE cần course_id để dựng link tới trang học (route /student/topics/:id/practice
+  // đã bị gỡ ở commit aab09e1 — bấm link cũ sẽ ra 404).
+  course_id?: number
 }
 
 interface LessonSummary {
@@ -25,6 +28,20 @@ interface TopicMastery {
   mastery: number
   current_level: number
   status: 'in_progress' | 'completed' | 'review_required'
+  // A2: bằng chứng quan sát được
+  correct_count?: number
+  wrong_count?: number
+  consecutive_correct?: number
+  consecutive_wrong?: number
+  recent_accuracy?: number
+  review_progress?: {
+    lesson_required: boolean
+    lesson_completed: boolean
+    correct_required: number
+    correct_done: number
+    consecutive_wrong: number
+    recent_accuracy: number
+  }
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -130,7 +147,7 @@ export default function StudentTopicDetailPage() {
               .map((l) => (
                 <Link
                   key={l.id}
-                  to={`/student/lessons/${l.id}`}
+                  to={`/student/courses/${topic?.course_id ?? 0}/learn?lesson=${l.id}`}
                   className="block bg-[#FFFDF9]/90 backdrop-blur border border-cream-200 rounded-2xl p-4 shadow-sm hover:shadow-cozy hover:-translate-y-0.5 hover:border-orange-300 transition"
                 >
                   <div className="flex items-center gap-3">
@@ -150,7 +167,7 @@ export default function StudentTopicDetailPage() {
           Hệ thống sẽ chọn câu hỏi phù hợp với trình độ hiện tại (BKT adaptive).
         </p>
         <Link
-          to={`/student/topics/${topicIdNum}/practice`}
+          to={`/student/courses/${topic?.course_id ?? 0}/learn?tab=practice&topic=${topicIdNum}`}
           className="inline-block px-5 py-2 rounded-xl bg-orange-600 text-white font-semibold hover:bg-orange-700 shadow-md shadow-orange-500/25"
         >
           {mastery?.status === 'completed' ? 'Luyện tập thêm' : 'Bắt đầu luyện tập'}

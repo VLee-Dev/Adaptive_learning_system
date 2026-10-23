@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, DateTime, Enum as SqlEnum, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.database import Base
+from core.database import Base, utcnow
 
 if TYPE_CHECKING:
     from app.attempts.model import Attempt
@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.recommendations.model import Recommendation
     from app.stimuli.model import Stimulus
     from app.topics.model import Topic
+    from app.questions.stat_model import QuestionStat
 
 
 class QuestionPurpose(str, Enum):
@@ -44,11 +45,12 @@ class Question(Base):
     is_ai_generated: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_reviewed: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     source_attempt_id: Mapped[int | None] = mapped_column(ForeignKey("attempts.id", ondelete="SET NULL", use_alter=True, name="fk_questions_source_attempt_id"))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
     stimulus: Mapped["Stimulus | None"] = relationship(back_populates="questions")
     topic: Mapped["Topic"] = relationship(back_populates="questions")
     attempts: Mapped[list["Attempt"]] = relationship(back_populates="question", foreign_keys="Attempt.question_id")
     source_attempt: Mapped["Attempt | None"] = relationship(foreign_keys=[source_attempt_id], post_update=True)
+    stats: Mapped[list["QuestionStat"]] = relationship(back_populates="question", cascade="all, delete-orphan")
     recommendations: Mapped[list["Recommendation"]] = relationship(back_populates="recommended_question")
     chapter_test_pools: Mapped[list["ChapterTestPool"]] = relationship(secondary="chapter_test_pool_questions", back_populates="questions")

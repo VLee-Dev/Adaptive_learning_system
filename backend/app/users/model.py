@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, DateTime, Enum as SqlEnum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.database import Base
+from core.database import Base, utcnow
 
 if TYPE_CHECKING:
     from app.attempts.model import Attempt
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.learning_events.model import LearningEvent
     from app.recommendations.model import Recommendation
     from app.mastery.model import TopicMastery
+    from app.questions.stat_model import QuestionStat
 
 
 class UserRole(str, Enum):
@@ -30,7 +31,7 @@ class User(Base):
     full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     role: Mapped[UserRole] = mapped_column(SqlEnum(UserRole, name="user_role", values_callable=lambda enum: [item.value for item in enum]), default=UserRole.STUDENT, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
     attempts: Mapped[list["Attempt"]] = relationship(back_populates="user")
     learning_events: Mapped[list["LearningEvent"]] = relationship(back_populates="user")
@@ -39,3 +40,4 @@ class User(Base):
     enrollments: Mapped[list["CourseEnrollment"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     chapter_completions: Mapped[list["ChapterCompletion"]] = relationship(back_populates="user")
     course_completions: Mapped[list["CourseCompletion"]] = relationship(back_populates="user")
+    question_stats: Mapped[list["QuestionStat"]] = relationship(back_populates="user", cascade="all, delete-orphan")

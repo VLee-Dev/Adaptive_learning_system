@@ -25,8 +25,11 @@ from app.learning.service import (
     get_monthly_streak,
     get_next_practice_question,
     get_topic_mastery_status,
-    submit_practice_answer
+    submit_practice_answer,
+    mark_review_lesson_viewed,
+    select_next_question,
 )
+from app.mastery.service import get_or_create_mastery
 from app.learning.chapter_test_service import (
     start_chapter_test,
     submit_chapter_test,
@@ -94,13 +97,22 @@ def get_practice_question(
 ):
     """Get next practice question for a topic."""
     try:
-        question = get_next_practice_question(db, current_user.id, topic_id)
-        if question is None:
+        mastery = get_or_create_mastery(db, current_user.id, topic_id)
+        selection = select_next_question(
+            db,
+            current_user.id,
+            topic_id,
+            current_level=mastery.current_level,
+            status=mastery.status,
+        )
+        if selection.question is None:
+            # Không còn câu phù hợp → trả 404 kèm lý do cụ thể để FE hiển thị
+            # đúng (thay vì thông báo chung chung).
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="No practice questions available for this topic"
+                detail=selection.note or "No practice questions available for this topic",
             )
-        return question
+        return selection.question
     except LookupError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
@@ -125,6 +137,24 @@ def submit_answer(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
+
+@router.post("/topics/{topic_id}/review/lesson-viewed", response_model=TopicMasteryResponse)
+def mark_lesson_viewed(
+    topic_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """B3: đánh dấu user đã xem bài giảng của topic (bước đầu vòng lặp ôn lại).
+
+    Sau khi gọi endpoint này, nếu user làm đúng đủ
+    CONSECUTIVE_CORRECT_TO_CLEAR câu liên tiếp thì thoát trạng thái
+    review_required.
+    """
+    try:
+        return mark_review_lesson_viewed(db, current_user.id, topic_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
 @router.post("/chapters/{chapter_id}/test/start", response_model=ChapterTestStartResponse)

@@ -1,6 +1,6 @@
 """Service layer for chapter final test execution."""
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.chapter_tests.repository import get_chapter_test, generate_test_questions
@@ -85,7 +85,7 @@ def start_chapter_test(db: Session, user_id: int, chapter_id: int) -> ChapterTes
         "chapter_id": chapter_id,
         "test_id": test.id,
         "slot_questions": {slot_idx: q.id for slot_idx, q in slot_questions.items()},
-        "started_at": datetime.utcnow().isoformat()
+        "started_at": datetime.now(timezone.utc).isoformat()
     }
 
     # Build response

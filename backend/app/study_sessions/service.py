@@ -21,7 +21,7 @@ def start_session(
 ) -> StudySession:
     """Bắt đầu 1 phiên học mới. Auto-abandon các session cũ trước."""
     auto_abandon_stale(db, user_id)
-    return create_session(db, user_id, kind, datetime.utcnow(), reference_id)
+    return create_session(db, user_id, kind, datetime.now(timezone.utc), reference_id)
 
 
 def heartbeat(
@@ -40,14 +40,15 @@ def stop_session(
     user_id: int,
 ) -> StudySession | None:
     """Kết thúc phiên học (submit answer, chuyển tab, đóng tab, idle)."""
-    return close_session(db, session_id, user_id, datetime.utcnow())
+    return close_session(db, session_id, user_id, datetime.now(timezone.utc))
 
 
-def _utc_to_local_date_key(dt_utc_naive: datetime, tz_offset_minutes: int) -> str:
-    """Convert naive UTC datetime → 'YYYY-MM-DD' theo local timezone."""
+def _utc_to_local_date_key(dt_utc: datetime, tz_offset_minutes: int) -> str:
+    """Convert datetime UTC (aware hoặc naive) → 'YYYY-MM-DD' theo local timezone."""
     local_tz = timezone(timedelta(minutes=-tz_offset_minutes))
-    local_dt = dt_utc_naive.replace(tzinfo=timezone.utc).astimezone(local_tz)
-    return local_dt.strftime("%Y-%m-%d")
+    if dt_utc.tzinfo is None:
+        dt_utc = dt_utc.replace(tzinfo=timezone.utc)
+    return dt_utc.astimezone(local_tz).strftime("%Y-%m-%d")
 
 
 def get_minutes_per_day(
@@ -72,8 +73,10 @@ def get_minutes_per_day(
         end_local = datetime(year + 1, 1, 1, 0, 0, 0, tzinfo=local_tz)
     else:
         end_local = datetime(year, month + 1, 1, 0, 0, 0, tzinfo=local_tz)
-    start_utc = start_local.astimezone(timezone.utc).replace(tzinfo=None)
-    end_utc = end_local.astimezone(timezone.utc).replace(tzinfo=None)
+    # Giữ tz-aware để so sánh đúng với cột TIMESTAMPTZ.
+    # Nếu strip tzinfo, Postgres sẽ diễn giải theo TimeZone của server → lệch ngày.
+    start_utc = start_local.astimezone(timezone.utc)
+    end_utc = end_local.astimezone(timezone.utc)
 
     sessions: Iterable[StudySession] = (
         db.query(StudySession)

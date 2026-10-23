@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, Enum as SqlEnum, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.database import Base
+from core.database import Base, utcnow
 
 if TYPE_CHECKING:
     from app.questions.model import Question
@@ -25,7 +25,7 @@ class Stimulus(Base):
     type: Mapped[StimulusType] = mapped_column(SqlEnum(StimulusType, name="stimulus_type", values_callable=lambda enum: [item.value for item in enum]), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id", ondelete="CASCADE"), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
     topic: Mapped["Topic"] = relationship(back_populates="stimuli")
     questions: Mapped[list["Question"]] = relationship(back_populates="stimulus")

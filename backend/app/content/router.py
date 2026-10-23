@@ -10,7 +10,7 @@ from app.content.schemas import (
 from app.content.service import (
     get_chapter_detail, get_chapter_topics, get_course_chapters,
     get_course_detail, get_lesson_detail, get_public_courses,
-    get_topic_detail, get_topic_lessons,
+    get_topic_detail, get_topic_lessons, topic_to_summary,
 )
 from app.users.model import User
 from core.database import get_db
@@ -60,7 +60,8 @@ def get_chapter(chapter_id: int, db: Session = Depends(get_db)):
 @router.get("/chapters/{chapter_id}/topics", response_model=list[TopicSummary])
 def get_chapter_topics_route(chapter_id: int, db: Session = Depends(get_db)):
     try:
-        return get_chapter_topics(db, chapter_id)
+        topics = get_chapter_topics(db, chapter_id)
+        return [topic_to_summary(t) for t in topics]
     except LookupError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
@@ -68,7 +69,8 @@ def get_chapter_topics_route(chapter_id: int, db: Session = Depends(get_db)):
 @router.get("/topics/{topic_id}", response_model=TopicSummary)
 def get_topic(topic_id: int, db: Session = Depends(get_db)):
     try:
-        return get_topic_detail(db, topic_id)
+        topic = get_topic_detail(db, topic_id)
+        return topic_to_summary(topic)
     except LookupError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
