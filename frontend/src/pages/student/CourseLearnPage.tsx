@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import StudentHeader from '@/components/StudentHeader'
-import ReviewBanner from '@/components/ReviewBanner'
 import api, {
   courseApi,
   toApiError,
@@ -59,24 +58,14 @@ interface TopicMastery {
   mastery: number
   current_level: number
   practice_attempts: number
-  status: 'in_progress' | 'completed' | 'review_required'
-  // A2: bằng chứng quan sát được
+  status: 'in_progress' | 'completed'
+  // Bằng chứng quan sát được
   correct_count?: number
   wrong_count?: number
   consecutive_correct?: number
   consecutive_wrong?: number
-  recent_accuracy?: number
-  review_progress?: ReviewProgress
-}
-
-/** B3: tiến độ thoát trạng thái review_required */
-interface ReviewProgress {
-  lesson_required: boolean
-  lesson_completed: boolean
-  correct_required: number
-  correct_done: number
-  consecutive_wrong: number
-  recent_accuracy: number
+  /** Topic đã đạt yêu cầu pass chưa? */
+  passed?: boolean
 }
 
 // === Practice types ===
@@ -90,19 +79,60 @@ interface PracticeQuestion {
   // true nếu đang ôn lại câu đã làm trước đó
   is_retry?: boolean
 }
+
+/** Kết quả 1 câu trong lượt luyện lại (sau khi đã pass). */
+interface PracticeAnswerResult {
+  question_id: number
+  is_correct: boolean
+  correct_answer: string
+}
+
+/** Tổng kết lượt luyện tập. */
+interface PracticeSummary {
+  total: number
+  correct: number
+  wrong: number
+  accuracy: number
+  /** Chi tiết câu đúng/sai (chỉ có ở lượt luyện lại). */
+  results?: PracticeAnswerResult[]
+}
+
+/**
+ * GET /practice/next trả 200 kèm `question: null` + `note` khi hết câu phù hợp
+ * (trước đây trả 404). Phải đọc qua `.question`, không dùng thẳng response
+ * làm PracticeQuestion — nếu không `question.options` sẽ là undefined và
+ * render `.map(...)` văng TypeError.
+ */
+interface NextQuestionResponse {
+  question: PracticeQuestion | null
+  note?: string | null
+  /** Topic đã pass → lượt luyện lại (không tính BKT). */
+  passed?: boolean
+  is_extra_practice?: boolean
+  attempts_used?: number
+  attempts_limit?: number
+}
+
 interface NextResponse {
   is_correct?: boolean
   correct_answer?: string
   explanation?: string | null
   updated_mastery: number
   current_level: number
-  status: 'in_progress' | 'completed' | 'review_required'
+  status: 'in_progress' | 'completed'
   next_question: PracticeQuestion | null
   // C2: lý do không có câu tiếp theo
   selection_note?: string | null
-  // B3
-  review_progress?: ReviewProgress
+  // Thông báo "hãy học kỹ hơn" (KHÔNG phải trạng thái)
+  warning?: string | null
+  lesson_url?: string | null
   suggested_lesson_id?: number | null
+  // Lượt thi
+  attempts_used?: number
+  attempts_limit?: number
+  passed?: boolean
+  is_extra_practice?: boolean
+  summary?: PracticeSummary
 }
 
 const LESSON_TYPE_ICON: Record<string, string> = {
@@ -119,7 +149,6 @@ const LESSON_TYPE_LABEL: Record<string, string> = {
 const STATUS_META: Record<NextResponse['status'], { label: string; color: string; emoji: string }> = {
   in_progress: { label: 'Đang học', color: 'bg-blue-100 text-blue-700', emoji: '📚' },
   completed: { label: 'Hoàn thành!', color: 'bg-green-100 text-green-700', emoji: '🎉' },
-  review_required: { label: 'Cần ôn lại', color: 'bg-red-100 text-red-700', emoji: '⚠️' },
 }
 
 type ContentView =
@@ -828,8 +857,11 @@ function PracticeView({
     mastery: number
     level: number
     status: NextResponse['status']
-    reviewProgress?: ReviewProgress
+    warning?: string | null
+    lessonUrl?: string | null
     suggestedLessonId?: number | null
+    passed?: boolean
+    isExtraPractice?: boolean
   } | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -838,8 +870,15 @@ function PracticeView({
   const [forceRestart, setForceRestart] = useState(false)
   // C2: ghi chú khi không có câu hỏi phù hợp
   const [selectionNote, setSelectionNote] = useState<string | null>(null)
-  // B3: bài giảng được đề xuất để ôn lại
-  const [suggestedLessonId, setSuggestedLessonId] = useState<number | null>(null)
+  // Thông báo "hãy học kỹ hơn" + link về bài giảng
+  const [warning, setWarning] = useState<string | null>(null)
+  const [lessonUrl, setLessonUrl] = useState<string | null>(null)
+  // Số câu đã làm / tổng số câu của lượt thi
+  const [attemptsUsed, setAttemptsUsed] = useState(0)
+  const [attemptsLimit, setAttemptsLimit] = useState(20)
+  // Lượt luyện lại sau khi đã pass (không tính BKT)
+  const [extraPractice, setExtraPractice] = useState(false)
+  const [extraSummary, setExtraSummary] = useState<PracticeSummary | null>(null)
 
   useEffect(() => {
     if (!topicId) return
@@ -847,14 +886,21 @@ function PracticeView({
     setLastResult(null)
     setError(null)
     setForceRestart(false)
+    setWarning(null)
+    setLessonUrl(null)
+    setExtraSummary(null)
     api
       .get<TopicMastery>(`/learning/topics/${topicId}/mastery`)
       .then((mRes) => {
         setTopic(mRes.data)
-        return api.get<PracticeQuestion>(`/learning/topics/${topicId}/practice/next`)
+        return api.get<NextQuestionResponse>(`/learning/topics/${topicId}/practice/next`)
       })
       .then((qRes) => {
-        setQuestion(qRes.data)
+        setQuestion(qRes.data.question)
+        setSelectionNote(qRes.data.note ?? null)
+        setExtraPractice(qRes.data.is_extra_practice ?? false)
+        setAttemptsUsed(qRes.data.attempts_used ?? 0)
+        setAttemptsLimit(qRes.data.attempts_limit ?? 20)
       })
       .catch((e) => setError(toApiError(e).detail))
       .finally(() => setLoading(false))
@@ -876,12 +922,25 @@ function PracticeView({
         mastery: r.data.updated_mastery,
         level: r.data.current_level,
         status: r.data.status,
-        reviewProgress: r.data.review_progress,
+        warning: r.data.warning ?? null,
+        lessonUrl: r.data.lesson_url ?? null,
         suggestedLessonId: r.data.suggested_lesson_id ?? null,
+        passed: r.data.passed ?? false,
+        isExtraPractice: r.data.is_extra_practice ?? false,
       })
       setQuestion(r.data.next_question)
       setSelectionNote(r.data.selection_note ?? null)
-      setSuggestedLessonId(r.data.suggested_lesson_id ?? null)
+      setWarning(r.data.warning ?? null)
+      setLessonUrl(r.data.lesson_url ?? null)
+      setAttemptsUsed(r.data.attempts_used ?? 0)
+      setAttemptsLimit(r.data.attempts_limit ?? 20)
+      setExtraPractice(r.data.is_extra_practice ?? false)
+      // Lượt luyện lại sau khi đã pass: chỉ ghi thống kê câu đúng/sai.
+      if (r.data.is_extra_practice) {
+        setExtraSummary(r.data.summary ?? null)
+      } else {
+        setExtraSummary(null)
+      }
       setSelected(null)
     } catch (e) {
       setError(toApiError(e).detail)
@@ -906,6 +965,11 @@ function PracticeView({
     )
   }
 
+  // Server tra `note` khác nhau cho 2 tình huống rất khác nhau: topic chưa có
+  // câu nào, hoặc đã ôn hết câu. Hiện chung "Chưa có câu hỏi" như trước là sai
+  // ý nghĩa khi người học chỉ đang đã ôn xong.
+  const isEmptyTopic = selectionNote?.includes('chưa có câu hỏi') ?? false
+
   // --- Đã pass: hiện panel "Đã hoàn thành" + nút Làm lại ---
   const isPassed = topic?.status === 'completed' && !forceRestart && !lastResult
   if (isPassed && topic) {
@@ -928,8 +992,14 @@ function PracticeView({
               setForceRestart(true)
               setLoading(true)
               api
-                .get<PracticeQuestion>(`/learning/topics/${topicId}/practice/next`)
-                .then((r) => setQuestion(r.data))
+                .get<NextQuestionResponse>(`/learning/topics/${topicId}/practice/next`)
+                .then((r) => {
+                  setQuestion(r.data.question)
+                  setSelectionNote(r.data.note ?? null)
+                  setExtraPractice(r.data.is_extra_practice ?? false)
+                  setAttemptsUsed(r.data.attempts_used ?? 0)
+                  setAttemptsLimit(r.data.attempts_limit ?? 20)
+                })
                 .catch((e) => setError(toApiError(e).detail))
                 .finally(() => setLoading(false))
             }}
@@ -938,6 +1008,9 @@ function PracticeView({
             <span className="material-symbols-outlined text-[18px]">refresh</span>
             Làm lại để luyện tập thêm
           </button>
+          <p className="text-xs text-stone-500 mt-2">
+            Lượt luyện lại không tính lại độ chắc — chỉ ghi lại kết quả từng câu.
+          </p>
         </div>
 
         {(prevItem || nextItem) && (
@@ -974,9 +1047,13 @@ function PracticeView({
     return (
       <div className="max-w-2xl mx-auto px-6 py-8">
         <div className="bg-[#FFFDF9]/90 backdrop-blur border border-cream-200 rounded-2xl p-8 text-center shadow-cozy">
-          <div className="text-3xl mb-2">🤔</div>
-          <h2 className="text-xl font-bold text-cream-900 mb-2">Chưa có câu hỏi</h2>
-          <p className="text-stone-600">Chủ đề này hiện chưa có câu hỏi luyện tập.</p>
+          <div className="text-3xl mb-2">{isEmptyTopic ? '🤔' : '✅'}</div>
+          <h2 className="text-xl font-bold text-cream-900 mb-2">
+            {isEmptyTopic ? 'Chủ đề chưa có câu hỏi' : 'Đã ôn hết chủ đề này'}
+          </h2>
+          <p className="text-stone-600">
+            {selectionNote ?? 'Bạn đã làm hết các câu hỏi luyện tập của chủ đề này.'}
+          </p>
           <button
             type="button"
             onClick={onClose}
@@ -989,23 +1066,101 @@ function PracticeView({
     )
   }
 
-  if (!question && lastResult) {
-    const meta = STATUS_META[lastResult.status]
+  // --- Màn tổng kết lượt luyện lại (sau khi đã pass) ---
+  if (extraPractice && extraSummary && !question) {
+    const pct = Math.round(extraSummary.accuracy * 100)
     return (
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
-        <div className={`p-6 rounded-2xl border ${meta.color} shadow-cozy`}>
+        <div className="p-6 rounded-2xl border bg-green-50 border-green-200 text-center shadow-cozy">
+          <div className="text-4xl mb-2">📝</div>
+          <h2 className="text-2xl font-bold text-green-800">Kết quả lượt ôn thêm</h2>
+          <p className="mt-2 text-sm text-stone-700">
+            {extraSummary.total} câu · Đúng {extraSummary.correct} · Sai {extraSummary.wrong} ·{' '}
+            <span className="font-bold">{pct}%</span>
+          </p>
+          <p className="mt-1 text-xs text-stone-500">
+            Lượt này không tính lại độ chắc — chủ đề đã hoàn thành.
+          </p>
+        </div>
+
+        {extraSummary.results && extraSummary.results.length > 0 && (
+          <div className="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
+            <h3 className="text-sm font-bold text-stone-700 mb-2">Chi tiết từng câu</h3>
+            <div className="space-y-1">
+              {extraSummary.results.map((r, i) => (
+                <div
+                  key={`${r.question_id}-${i}`}
+                  className="flex items-center justify-between text-xs px-2 py-1 rounded-lg bg-stone-50"
+                >
+                  <span className="text-stone-600">Câu {i + 1}</span>
+                  <span
+                    className={`font-semibold ${r.is_correct ? 'text-green-700' : 'text-red-600'}`}
+                  >
+                    {r.is_correct ? '✓ Đúng' : '✗ Sai'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-orange-200 bg-white text-orange-600 hover:bg-orange-50 hover:border-orange-300 font-semibold transition shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            Quay lại
+          </button>
+          {nextItem ? (
+            <button
+              type="button"
+              onClick={() => onNavigateItem(nextItem)}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 text-white font-semibold hover:bg-orange-700 transition shadow-md shadow-orange-500/25"
+            >
+              Tiếp theo
+              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </button>
+          ) : null}
+        </div>
+      </div>
+    )
+  }
+
+  // --- Kết thúc lượt thi: đủ 20 câu hoặc đã pass ---
+  if (!question && lastResult) {
+    const meta = STATUS_META[lastResult.status]
+    const pct = Math.round(lastResult.mastery * 100)
+    return (
+      <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
+        <div className={`p-6 rounded-2xl border ${meta.color} shadow-cozy text-center`}>
           <div className="text-4xl mb-2">{meta.emoji}</div>
           <h2 className="text-2xl font-bold">{meta.label}</h2>
           <p className="mt-2 text-sm">
-            Mastery: {Math.round(lastResult.mastery * 100)}% · Level {lastResult.level}
+            Mastery: {pct}% · Level {lastResult.level}
           </p>
-          {lastResult.status === 'completed' && (
-            <p className="mt-2 text-sm">Bạn đã hoàn thành chủ đề này! Hãy thử làm các chủ đề khác.</p>
-          )}
-          {lastResult.status === 'review_required' && (
-            <p className="mt-2 text-sm">Bạn nên xem lại bài giảng trước khi tiếp tục.</p>
+          {lastResult.status === 'completed' ? (
+            <p className="mt-2 text-sm font-semibold">
+              🎉 Bạn đã hoàn thành chủ đề này! Hãy thử làm các chủ đề khác.
+            </p>
+          ) : (
+            <p className="mt-2 text-sm">
+              Bạn đã làm đủ {attemptsLimit} câu. Hãy xem lại kết quả rồi quay lại ôn thêm nếu muốn.
+            </p>
           )}
         </div>
+
+        {warning && (
+          <WarningBanner
+            message={warning}
+            lessonUrl={lessonUrl ?? lastResult.lessonUrl ?? null}
+            onOpenLesson={(lessonId) =>
+              onNavigateItem({ type: 'lesson', id: lessonId, topicId, chapterId })
+            }
+          />
+        )}
+
         <div className="flex gap-3">
           {prevItem ? (
             <button
@@ -1043,6 +1198,7 @@ function PracticeView({
   }
 
   const masteryPct = lastResult ? Math.round(lastResult.mastery * 100) : 0
+  const progressPct = Math.min(100, Math.round((attemptsUsed / attemptsLimit) * 100))
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-6 space-y-6">
@@ -1078,6 +1234,21 @@ function PracticeView({
         </div>
       )}
 
+      {/* Tiến độ lượt thi: x / 20 câu */}
+      {!extraPractice && (
+        <div className="flex items-center gap-3">
+          <div className="flex-1 bg-stone-200 rounded-full h-1.5">
+            <div
+              className="h-1.5 rounded-full bg-orange-500 transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          <span className="text-xs text-stone-500 font-medium shrink-0">
+            {attemptsUsed}/{attemptsLimit} câu
+          </span>
+        </div>
+      )}
+
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           {error}
@@ -1107,20 +1278,14 @@ function PracticeView({
         </div>
       )}
 
-      {/* B3: Banner "Cần ôn lại" — hướng dẫn user thoát trạng thái review */}
-      {(lastResult?.status === 'review_required' || topic?.status === 'review_required') && (
-        <ReviewBanner
-          topicId={topicId}
-          progress={lastResult?.reviewProgress ?? topic?.review_progress}
-          suggestedLessonId={suggestedLessonId ?? lastResult?.suggestedLessonId ?? null}
-            onOpenLesson={(lessonId) =>
-              onNavigateItem({
-                type: 'lesson',
-                id: lessonId,
-                topicId,
-                chapterId,
-              })
-            }
+      {/* Thông báo "hãy học kỹ hơn" + link về bài giảng */}
+      {warning && (
+        <WarningBanner
+          message={warning}
+          lessonUrl={lessonUrl ?? lastResult?.lessonUrl ?? null}
+          onOpenLesson={(lessonId) =>
+            onNavigateItem({ type: 'lesson', id: lessonId, topicId, chapterId })
+          }
         />
       )}
 
@@ -1174,6 +1339,51 @@ function PracticeView({
             {submitting ? 'Đang chấm…' : 'Nộp câu trả lời'}
           </button>
         </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * WarningBanner — thông báo "hãy học kỹ hơn" kèm link quay lại bài giảng.
+ *
+ * KHÔNG phải trạng thái chặn: người học vẫn làm tiếp được. Chỉ là nhắc họ
+ * đọc lại bài giảng trước khi tiếp tục.
+ */
+function WarningBanner({
+  message,
+  lessonUrl,
+  onOpenLesson,
+}: {
+  message: string
+  lessonUrl: string | null
+  onOpenLesson: (lessonId: number) => void
+}) {
+  // `lessonUrl` dạng "/student/lessons/{id}" → lấy id để điều hướng trong app.
+  const lessonId = lessonUrl ? Number(lessonUrl.split('/').pop()) : null
+  const hasLesson = lessonId !== null && Number.isFinite(lessonId)
+
+  return (
+    <div className="p-4 rounded-2xl border border-amber-300 bg-amber-50 space-y-3">
+      <div className="flex items-start gap-2">
+        <span className="text-xl leading-none">⚠️</span>
+        <div className="flex-1">
+          <div className="font-bold text-sm text-amber-900">{message}</div>
+          <p className="text-xs text-amber-800 mt-0.5">
+            Bạn đang sai nhiều câu liên tiếp. Đọc lại bài giảng sẽ giúp bạn nắm
+            chắc hơn trước khi tiếp tục.
+          </p>
+        </div>
+      </div>
+      {hasLesson && (
+        <button
+          type="button"
+          onClick={() => onOpenLesson(lessonId)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-amber-300 text-amber-800 font-semibold hover:bg-amber-100 transition shadow-sm"
+        >
+          <span className="material-symbols-outlined text-[18px]">menu_book</span>
+          Xem lại bài giảng
+        </button>
       )}
     </div>
   )

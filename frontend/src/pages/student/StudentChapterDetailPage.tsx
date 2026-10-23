@@ -26,7 +26,7 @@ interface TopicMastery {
   mastery: number
   current_level: number
   practice_attempts: number
-  status: 'in_progress' | 'completed' | 'review_required'
+  status: 'in_progress' | 'completed'
 }
 
 interface Completion {
@@ -38,7 +38,6 @@ interface Completion {
 const STATUS_LABEL: Record<TopicMastery['status'], { label: string; color: string }> = {
   in_progress: { label: 'Đang học', color: 'bg-blue-100 text-blue-700' },
   completed: { label: 'Hoàn thành', color: 'bg-green-100 text-green-700' },
-  review_required: { label: 'Cần ôn lại', color: 'bg-red-100 text-red-700' },
 }
 
 export default function StudentChapterDetailPage() {

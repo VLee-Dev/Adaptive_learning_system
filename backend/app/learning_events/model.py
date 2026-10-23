@@ -16,7 +16,9 @@ if TYPE_CHECKING:
 class LearningEventType(str, Enum):
     ANSWER = "answer"
     AI_EXPLANATION_SHOWN = "ai_explanation_shown"
-    REMEDIAL_TRIGGERED = "remedial_triggered"
+    # REMEDIAL_TRIGGERED đã bị xoá (2026-10-23): cảnh báo "hãy học kỹ hơn"
+    # giờ là *thông báo* kèm link bài giảng, không phải trạng thái review →
+    # không còn "điểm khởi động vòng lặp ôn" để ghi lại.
 
 
 class LearningEvent(Base):

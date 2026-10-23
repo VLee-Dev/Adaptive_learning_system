@@ -48,7 +48,7 @@ interface TopicMastery {
   topic_id: number
   mastery: number
   current_level: number
-  status: 'in_progress' | 'completed' | 'review_required'
+  status: 'in_progress' | 'completed'
 }
 
 const TYPE_ICON: Record<string, string> = {

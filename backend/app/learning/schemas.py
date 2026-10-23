@@ -2,20 +2,6 @@
 from pydantic import BaseModel, Field
 
 
-class PracticeStartRequest(BaseModel):
-    """Request to start a practice session for a topic."""
-    topic_id: int
-
-
-class PracticeStartResponse(BaseModel):
-    """Response when starting a practice session."""
-    session_id: str
-    topic_id: int
-    current_level: int
-    current_mastery: float
-    questions_remaining: int
-
-
 class QuestionResponse(BaseModel):
     """Response containing a practice question."""
     question_id: int
@@ -35,10 +21,48 @@ class QuestionSelection(BaseModel):
     note: str | None = None
 
 
+class PracticeNextResponse(BaseModel):
+    """GET /practice/next.
+
+    Trả 200 kèm `question: null` + `note` khi hết câu phù hợp, thay vì 404.
+    "Hết câu phù hợp" là trạng thái BÌNH THƯỜNG (đã ôn xong), FE cần thông
+    báo đúng chứ không phải màn lỗi "Chưa có câu hỏi".
+    """
+    question: QuestionResponse | None = None
+    note: str | None = None
+    # Topic đã pass → đây là lượt luyện lại (không tính BKT).
+    passed: bool = False
+    is_extra_practice: bool = False
+    # Số câu đã làm / tổng số câu của lượt thi (để FE hiện thanh tiến độ).
+    attempts_used: int = 0
+    attempts_limit: int = 20
+
+
 class AnswerSubmitRequest(BaseModel):
     """Request to submit an answer to a practice question."""
     question_id: int
     selected_answer: str
+
+
+class PracticeAnswerResult(BaseModel):
+    """Kết quả 1 câu trong lượt luyện lại (sau khi đã pass).
+
+    Chỉ ghi thống kê — không tính BKT, không cộng `practice_attempts`.
+    """
+    question_id: int
+    is_correct: bool
+    # Đáp án đúng (rỗng nếu không lấy được — FE chỉ cần đúng/sai).
+    correct_answer: str = ""
+
+
+class PracticeSummary(BaseModel):
+    """Tổng kết lượt luyện tập."""
+    total: int = 0
+    correct: int = 0
+    wrong: int = 0
+    accuracy: float = 0.0
+    # Danh sách câu đúng/sai (chỉ có ở lượt luyện lại sau khi đã pass).
+    results: list[PracticeAnswerResult] = Field(default_factory=list)
 
 
 class AnswerSubmitResponse(BaseModel):
@@ -48,14 +72,26 @@ class AnswerSubmitResponse(BaseModel):
     explanation: str | None = None
     updated_mastery: float
     current_level: int
-    status: str  # "in_progress", "completed", "review_required"
+    status: str  # "in_progress" | "completed"
     next_question: QuestionResponse | None = None
     # C2: lý do không có câu tiếp theo (bank hết câu phù hợp)
     selection_note: str | None = None
-    # B3: tiến độ thoát trạng thái review (xem bài giảng + số câu đúng liên tiếp)
-    review_progress: dict = Field(default_factory=dict)
-    # B3: bài giảng nên đọc khi bị yêu cầu ôn lại (None nếu topic không có bài giảng)
+
+    # --- Thông báo "hãy học kỹ hơn" (KHÔNG phải trạng thái) ---
+    # Điều kiện: 5 sai liên tiếp, HOẶC 3 sai liên tiếp khi BKT < 0.30.
+    # `lesson_url` trỏ về bài giảng để người học đọc lại.
+    warning: str | None = None
+    lesson_url: str | None = None
     suggested_lesson_id: int | None = None
+
+    # --- Lượt thi ---
+    attempts_used: int = 0
+    attempts_limit: int = 20
+    # Topic đã đạt yêu cầu pass.
+    passed: bool = False
+    # Lượt luyện lại sau khi đã pass → không tính BKT.
+    is_extra_practice: bool = False
+    summary: PracticeSummary = Field(default_factory=PracticeSummary)
 
 
 class TopicMasteryResponse(BaseModel):
@@ -66,13 +102,13 @@ class TopicMasteryResponse(BaseModel):
     current_level: int
     practice_attempts: int
     status: str
-    # A2: bằng chứng quan sát được (mastery là ước lượng, không phải trạng thái)
+    # Bằng chứng quan sát được (mastery là ước lượng, không phải trạng thái)
     correct_count: int = 0
     wrong_count: int = 0
     consecutive_correct: int = 0
     consecutive_wrong: int = 0
-    recent_accuracy: float = 0.0
-    review_progress: dict = Field(default_factory=dict)
+    # Người học đã đạt yêu cầu pass chủ đề này chưa?
+    passed: bool = False
 
     class Config:
         from_attributes = True

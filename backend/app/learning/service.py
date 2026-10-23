@@ -7,14 +7,15 @@ from sqlalchemy.orm import Session
 
 from app.attempts.model import Attempt
 from app.attempts.repository import (
-    create_attempt,
+    get_attempted_question_ids,
     get_recent_attempted_question_ids,
 )
 from app.mastery.service import (
+    MAX_QUESTIONS_PER_TOPIC,
     get_or_create_mastery,
+    should_warn,
     update_mastery_after_answer,
-    mark_lesson_viewed,
-    QUESTIONS_PER_SESSION,
+    WARNING_MESSAGE,
 )
 from app.questions.repository import (
     get_all_practice_questions,
@@ -35,8 +36,13 @@ from app.learning.schemas import (
 # Topic chỉ có ~10 câu practice (level 1: 4, level 2: 3, level 3: 3) nên các
 # ngưỡng này cố ý nhỏ — mục tiêu là "thử đúng chỗ sai trước, nhưng không
 # bắt user làm câu quá khó so với trình độ".
-WRONG_RATE_THRESHOLD = 0.4   # câu này user sai >= 40% số lần đã làm → "hay sai"
+WRONG_RATE_THRESHOLD = 0.4   # weakness >= 0.4 → coi là "hay sai" (xem stat_model)
 MAX_LEVEL_OFFSET = 1         # lệch level tối đa so với current_level
+
+# Phạt lặp trong cùng 1 phiên (C3). Mỗi câu chỉ nên xuất hiện 1 lần nếu còn
+# câu khác chưa làm — trước đây người học phải làm cùng một câu 3-4 lần mới đủ
+# số lượt, với bank 10 câu thì phiên luyện gần như là lặp.
+REPEAT_PENALTY_IN_SESSION = 25.0    # phạt mạnh câu đã hiện trong phiên
 
 
 def _build_question_response(
@@ -58,29 +64,34 @@ def _build_question_response(
 
 def _pool_with_scores(
     questions: list,
-    wrong_rates: dict[int, float],
+    weakness: dict[int, float],
     recent_ids: set[int],
+    in_session_ids: set[int] | None = None,
 ) -> list[tuple]:
     """
-    Chấm điểm câu hỏi theo thứ tự ưu tiên weak-first (C2).
+    Chấm điểm câu hỏi theo thứ tự ưu tiên weak-first (C2 + C3).
 
     Điểm cao = nên chọn trước:
-      + hay sai (wrong_rate cao) trong cửa sổ gần đây → ưu tiên mạnh
+      + hay sai (`weakness` cao, có suy giảm theo số lần làm đúng)
       + chưa làm gần đây → ưu tiên nhẹ (tránh lặp)
+      - đã hiện trong phiên này → phạt mạnh để câu khác có cơ hội
     """
+    in_session_ids = in_session_ids or set()
     scored = []
     for q in questions:
-        wr = wrong_rates.get(q.id, 0.0)
+        w = weakness.get(q.id, 0.0)
         recently_attempted = q.id in recent_ids
         score = 0.0
-        if wr >= WRONG_RATE_THRESHOLD:
-            score += 10.0 + wr * 5.0
-        elif wr > 0:
-            score += wr * 2.0
+        if w >= WRONG_RATE_THRESHOLD:
+            score += 10.0 + w * 5.0
+        elif w > 0:
+            score += w * 2.0
         if not recently_attempted:
             score += 3.0
         else:
             score -= 2.0  # phạt nhẹ câu vừa làm → tránh lặp ngay
+        if q.id in in_session_ids:
+            score -= REPEAT_PENALTY_IN_SESSION
         scored.append((q, score))
     # Ổn định: sắp theo score giảm dần, tie-break theo id để deterministic
     scored.sort(key=lambda item: (-item[1], item[0].id))
@@ -93,26 +104,42 @@ def select_next_question(
     topic_id: int,
     current_level: int,
     status: str,
+    in_session_ids: set[int] | None = None,
 ) -> QuestionSelection:
     """
-    Chọn câu hỏi tiếp theo theo chiến lược weak-first + khoá mềm level (C2).
+    Chọn câu hỏi tiếp theo: weak-first + khoá mềm level (C2), có phạt lặp (C3).
 
-    Thứ tự ưu tiên khi đang học bình thường:
-      1. Câu CHƯA LÀM gần đây ở level hiện tại
-      2. Câu HAY SAI ở level hiện tại (ôn lại đúng chỗ sai)
-      3. Câu chưa làm ở level thấp hơn (dễ hơn — khi đang gặp khó)
-      4. Câu chưa làm ở level cao hơn (khó hơn — khi đang ổn định)
+    Điểm khác biệt so với bản trước:
 
-    Khi status == 'review_required' → weak-only: chỉ câu hay sai + câu chưa
-    làm ở level thấp hơn, bỏ qua việc tăng độ khó.
+    - Dùng `weakness` (có suy giảm khi làm đúng) thay vì `wrong_rate` lũy kếa.
+      Trước đây một câu sai 3/5 lần giữ wrong_rate = 0.6 vĩnh viễn, nên vòng
+      lặp ôn không bao giờ thoát được.
+    - Phạt câu đã hiện trong phiên (`in_session_ids`) để câu chưa làm được
+      ưu tiên: giảm tình trạng làm cùng một câu 3-4 lần.
+    - Ưu tiên câu CHƯA TỪNG LÀM (lịch sử trọn đời) trước câu "chưa làm gần
+      đây". Trước đây cửa sổ 12 lượt với bank 10 câu nghĩa là gần như mọi câu
+      đều bị coi là đã làm, rơi thẳng xuống nhóm ôn câu cũ.
+
+    Không còn nhánh riêng cho `review_required`: cảnh báo "hãy học kỹ hơn" là
+    *thông báo*, không phải trạng thái — luồng chọn câu giống hệt nhau.
 
     Returns:
-        QuestionSelection — kèm note giải thích khi không có câu phù hợp.
+        QuestionSelection: kèm note giải thích khi không có câu phù hợp.
     """
+    in_session_ids = in_session_ids or set()
+    # Câu đã từng làm bao giờ (không phải chỉ 12 lượt gần nhất) để ưu tiên
+    # câu mới thật sự.
+    ever_ids = set(get_attempted_question_ids(db, user_id, topic_id))
     recent_ids = set(get_recent_attempted_question_ids(db, user_id, topic_id))
     all_questions = get_all_practice_questions(db, topic_id)
-    wrong_rates = {
-        qid: st.wrong_rate
+    if not all_questions:
+        return QuestionSelection(
+            question=None,
+            note="Chủ đề này chưa có câu hỏi luyện tập nào.",
+        )
+
+    weakness = {
+        qid: st.weakness
         for qid, st in get_question_wrong_rates(
             db, user_id, [q.id for q in all_questions]
         ).items()
@@ -121,58 +148,37 @@ def select_next_question(
     def pick(pool: list, reason: str) -> QuestionSelection | None:
         if not pool:
             return None
-        scored = _pool_with_scores(pool, wrong_rates, recent_ids)
+        scored = _pool_with_scores(pool, weakness, recent_ids, in_session_ids)
         # random.choice trên nhóm cùng điểm cao nhất để phá băng
         top_score = scored[0][1]
         tied = [q for q, s in scored if s == top_score]
         chosen = random.choice(tied)
         return QuestionSelection(
             question=_build_question_response(
-                chosen, current_level, reason, chosen.id in recent_ids
+                chosen, current_level, reason, chosen.id in ever_ids
             ),
             note=None,
         )
 
-    is_review = status == "review_required"
-
     def by_level(level: int) -> list:
         return [q for q in all_questions if (q.level or 1) == level]
 
-    def unseen(pool: list) -> list:
+    def never_seen(pool: list) -> list:
+        """Chưa TỪNG làm: ưu tiên cao nhất, tránh lặp tới mức người học chán."""
+        return [q for q in pool if q.id not in ever_ids]
+
+    def not_recent(pool: list) -> list:
         return [q for q in pool if q.id not in recent_ids]
 
     def weak(pool: list) -> list:
         return [
             q for q in pool
-            if wrong_rates.get(q.id, 0.0) >= WRONG_RATE_THRESHOLD
+            if weakness.get(q.id, 0.0) >= WRONG_RATE_THRESHOLD
         ]
 
-    if is_review:
-        # Weak-only: ôn lại đúng chỗ sai, không tăng độ khó.
-        for level in [current_level, current_level - 1]:
-            if level < 1:
-                continue
-            result = pick(weak(by_level(level)), "Ôn lại chỗ bạn hay sai")
-            if result:
-                return result
-        # Hết câu hay sai → câu chưa làm ở level không cao hơn hiện tại.
-        for level in [current_level, current_level - 1]:
-            if level < 1:
-                continue
-            result = pick(unseen(by_level(level)), "Củng cố bằng câu mới ở level dễ hơn")
-            if result:
-                return result
-        return QuestionSelection(
-            question=None,
-            note=(
-                "Bạn đã làm hết các câu trong chủ đề này. Hãy xem lại bài giảng "
-                "rồi thử lại, hoặc chuyển sang chủ đề khác."
-            ),
-        )
-
     # --- Đang học bình thường ---
-    # 1. Câu chưa làm ở level hiện tại
-    result = pick(unseen(by_level(current_level)), "Câu mới ở level hiện tại")
+    # 1. Câu chưa từng làm ở level hiện tại
+    result = pick(never_seen(by_level(current_level)), "Câu mới ở level hiện tại")
     if result:
         return result
 
@@ -181,25 +187,38 @@ def select_next_question(
     if result:
         return result
 
-    # 3. Câu chưa làm ở level thấp hơn (gặp khó → dễ hơn)
+    # 3. Câu chưa từng làm ở level dễ hơn (gặp khó thì dễ hơn)
     for level in range(current_level - 1, 0, -1):
-        result = pick(unseen(by_level(level)), "Câu mới ở level dễ hơn")
+        result = pick(never_seen(by_level(level)), "Câu mới ở level dễ hơn")
         if result:
             return result
 
-    # 4. Câu chưa làm ở level cao hơn (ổn định → khó hơn)
-    for level in range(current_level + 1, current_level + MAX_LEVEL_OFFSET + 2):
-        result = pick(unseen(by_level(level)), "Câu mới ở level khó hơn")
+    # 4. Câu chưa từng làm ở level khó hơn (ổn định thì khó hơn)
+    for offset in range(1, MAX_LEVEL_OFFSET + 1):
+        result = pick(
+            never_seen(by_level(current_level + offset)),
+            "Câu mới ở level khó hơn",
+        )
         if result:
             return result
 
-    # 5. Câu chưa làm ở bất kỳ level nào (bank mỏng, vẫn còn câu mới)
-    result = pick(unseen(all_questions), "Câu mới")
+    # 5. Câu chưa làm GẦN ĐÂY ở bất kỳ level nào (đã từng làm nhưng lâu rồi)
+    result = pick(not_recent(all_questions), "Câu đã làm lâu rồi, thử lại")
     if result:
         return result
 
-    # 6. Hết câu chưa làm → quay lại câu hay sai đã làm (ôn lại cũ)
+    # 6. Câu chưa từng làm ở bất kỳ level nào (bank mỏng)
+    result = pick(never_seen(all_questions), "Câu mới")
+    if result:
+        return result
+
+    # 7. Hết câu mới: quay lại câu hay sai để ôn (chấp nhận lặp)
     result = pick(weak(all_questions), "Ôn lại câu cũ")
+    if result:
+        return result
+
+    # 8. Không còn câu nào đủ "hay sai": ôn lại câu ít sai nhất.
+    result = pick(all_questions, "Ôn lại câu đã làm")
     if result:
         return result
 
@@ -208,28 +227,6 @@ def select_next_question(
         note="Chưa có câu hỏi luyện tập cho chủ đề này.",
     )
 
-
-def get_next_practice_question(db: Session, user_id: int, topic_id: int) -> QuestionResponse | None:
-    """
-    Get the next practice question for a student based on their current mastery level.
-
-    Args:
-        db: Database session
-        user_id: Student user ID
-        topic_id: Topic ID
-
-    Returns:
-        QuestionResponse or None if no questions available
-    """
-    mastery = get_or_create_mastery(db, user_id, topic_id)
-    selection = select_next_question(
-        db,
-        user_id,
-        topic_id,
-        current_level=mastery.current_level,
-        status=mastery.status,
-    )
-    return selection.question
 
 
 def submit_practice_answer(
@@ -274,38 +271,70 @@ def submit_practice_answer(
         is_correct=is_correct,
     )
     db.add(attempt)
-    db.flush()  # cần attempt.id để tạo LearningEvent
+    db.flush()
 
     # C2: cập nhật thống kê sai theo từng câu (dùng để chọn câu weak-first).
     upsert_question_stat(db, user_id, question_id, is_correct)
 
-    # Nhớ trạng thái review trước khi cập nhật (để biết có cần ghi remedial event).
+    # Đã pass trước đó chưa? Nếu rồi → lượt luyện lại: KHÔNG tính BKT,
+    # KHÔNG cộng `practice_attempts`. Chỉ ghi thống kê câu đúng/sai.
+    #
+    # Query trực tiếp, KHÔNG dùng `get_or_create_mastery`: hàm đó `db.commit()`
+    # khi tạo mới → sẽ commit nửa chừng, phá vỡ tính nguyên tử của transaction
+    # (attempt + stats + mastery phải vào chung 1 lần commit).
     from app.mastery.repository import get_mastery
 
     mastery_before = get_mastery(db, user_id, topic_id)
-    was_review = mastery_before.status == "review_required" if mastery_before else False
+    already_passed = mastery_before is not None and mastery_before.status == "completed"
 
     # Update mastery using BKT (cùng transaction)
-    updated_mastery = update_mastery_after_answer(db, user_id, topic_id, is_correct)
-
-    # B3: ghi nhận lần đầu chuyển vào review_required — đây là điểm khởi động
-    # vòng lặp "học lại → củng cố". Trước đây LearningEventType.REMEDIAL_TRIGGERED
-    # được định nghĩa nhưng KHÔNG nơi nào gọi, nên không ai học lại bài giảng.
-    entered_review = (
-        updated_mastery.status == "review_required" and not was_review
+    updated_mastery = update_mastery_after_answer(
+        db,
+        user_id,
+        topic_id,
+        is_correct,
+        count_towards_progress=not already_passed,
     )
-    if entered_review:
-        _record_remedial_triggered(db, user_id, topic_id, attempt.id)
 
     # Commit duy nhất cho cả attempt + mastery update + stats
     db.commit()
     db.refresh(updated_mastery)
     db.refresh(attempt)
 
-    # Get next question if practice should continue
+    attempts_used = updated_mastery.practice_attempts
+    passed = updated_mastery.status == "completed"
+
+    # --- Lượt luyện lại sau khi đã pass ---
+    if already_passed:
+        summary = _build_extra_practice_summary(db, user_id, topic_id)
+        return AnswerSubmitResponse(
+            is_correct=is_correct,
+            correct_answer=question.correct_answer,
+            explanation=question.explanation,
+            updated_mastery=updated_mastery.mastery,
+            current_level=updated_mastery.current_level,
+            status=updated_mastery.status,
+            next_question=None,
+            selection_note="Bạn đã hoàn thành chủ đề này. Lượt này chỉ để ôn thêm.",
+            attempts_used=attempts_used,
+            attempts_limit=MAX_QUESTIONS_PER_TOPIC,
+            passed=True,
+            is_extra_practice=True,
+            summary=summary,
+        )
+
+    # --- Lượt thi bình thường ---
+    # Chọn câu tiếp theo (nếu chưa đủ 20 câu).
     next_question = None
     selection_note = None
-    if updated_mastery.status != "completed":
+    if passed:
+        selection_note = "Bạn đã hoàn thành chủ đề này."
+    elif attempts_used >= MAX_QUESTIONS_PER_TOPIC:
+        selection_note = (
+            f"Bạn đã làm đủ {MAX_QUESTIONS_PER_TOPIC} câu. "
+            "Hãy xem lại kết quả rồi quay lại nếu muốn ôn thêm."
+        )
+    else:
         selection = select_next_question(
             db,
             user_id,
@@ -316,6 +345,16 @@ def submit_practice_answer(
         next_question = selection.question
         selection_note = selection.note
 
+    # --- Thông báo "hãy học kỹ hơn" (KHÔNG phải trạng thái) ---
+    warning = None
+    lesson_url = None
+    suggested_lesson_id = None
+    if should_warn(updated_mastery):
+        warning = WARNING_MESSAGE
+        suggested_lesson_id = _first_lesson_id(db, topic_id)
+        if suggested_lesson_id is not None:
+            lesson_url = f"/student/lessons/{suggested_lesson_id}"
+
     return AnswerSubmitResponse(
         is_correct=is_correct,
         correct_answer=question.correct_answer,
@@ -325,29 +364,77 @@ def submit_practice_answer(
         status=updated_mastery.status,
         next_question=next_question,
         selection_note=selection_note,
-        review_progress=_build_review_progress(db, user_id, topic_id, updated_mastery),
-        suggested_lesson_id=_first_lesson_id(db, topic_id)
-        if updated_mastery.status == "review_required"
-        else None,
+        warning=warning,
+        lesson_url=lesson_url,
+        suggested_lesson_id=suggested_lesson_id,
+        attempts_used=attempts_used,
+        attempts_limit=MAX_QUESTIONS_PER_TOPIC,
+        passed=passed,
+        is_extra_practice=False,
+        summary=_build_attempt_summary(db, user_id, topic_id, attempts_used),
     )
 
 
-def _record_remedial_triggered(db: Session, user_id: int, topic_id: int, attempt_id: int) -> None:
-    """Ghi LearningEvent loại remedial để truy vết vòng lặp ôn lại (B3)."""
-    from app.learning_events.model import LearningEvent, LearningEventType
+def _build_attempt_summary(
+    db: Session, user_id: int, topic_id: int, attempts_used: int
+) -> "PracticeSummary":
+    """Tổng kết lượt thi hiện tại (số câu đúng/sai trong `attempts_used` lượt)."""
+    from app.learning.schemas import PracticeSummary
 
-    db.add(
-        LearningEvent(
-            user_id=user_id,
-            attempt_id=attempt_id,
-            topic_id=topic_id,
-            event_type=LearningEventType.REMEDIAL_TRIGGERED,
+    rows = (
+        db.query(Attempt.is_correct)
+        .filter(
+            Attempt.user_id == user_id,
+            Attempt.topic_id == topic_id,
         )
+        .order_by(Attempt.created_at.desc(), Attempt.id.desc())
+        .limit(attempts_used)
+        .all()
+    )
+    results = [bool(r.is_correct) for r in rows]
+    correct = sum(1 for r in results if r)
+    total = len(results)
+    return PracticeSummary(
+        total=total,
+        correct=correct,
+        wrong=total - correct,
+        accuracy=round(correct / total, 3) if total else 0.0,
+    )
+
+
+def _build_extra_practice_summary(
+    db: Session, user_id: int, topic_id: int
+) -> "PracticeSummary":
+    """Tổng kết lượt luyện lại: câu nào đúng, câu nào sai."""
+    from app.learning.schemas import PracticeAnswerResult, PracticeSummary
+
+    rows = (
+        db.query(Attempt.question_id, Attempt.is_correct)
+        .filter(
+            Attempt.user_id == user_id,
+            Attempt.topic_id == topic_id,
+        )
+        .order_by(Attempt.created_at.desc(), Attempt.id.desc())
+        .limit(50)
+        .all()
+    )
+    results = [
+        PracticeAnswerResult(question_id=qid, is_correct=bool(ok))
+        for qid, ok in rows
+    ]
+    correct = sum(1 for r in results if r.is_correct)
+    total = len(results)
+    return PracticeSummary(
+        total=total,
+        correct=correct,
+        wrong=total - correct,
+        accuracy=round(correct / total, 3) if total else 0.0,
+        results=results,
     )
 
 
 def _first_lesson_id(db: Session, topic_id: int) -> int | None:
-    """Lesson đầu tiên của topic (để FE gửi user đọc bài giảng khi bị yêu cầu ôn)."""
+    """Lesson đầu tiên của topic (để FE gửi user đọc bài giảng khi được nhắc học lại)."""
     from app.lessons.model import Lesson
 
     lesson = (
@@ -357,74 +444,6 @@ def _first_lesson_id(db: Session, topic_id: int) -> int | None:
         .first()
     )
     return lesson[0] if lesson else None
-
-
-def _build_review_progress(db: Session, user_id: int, topic_id: int, mastery) -> dict:
-    """
-    Tiến độ thoát trạng thái review (B3).
-
-    FE hiển thị: "đã xem bài giảng ✓ · đúng 2/3 câu củng cố" để user biết
-    còn thiếu gì để thoát.
-    """
-    from app.mastery.service import (
-        CONSECUTIVE_CORRECT_TO_CLEAR,
-        topic_has_lessons,
-    )
-
-    has_lessons = topic_has_lessons(db, topic_id)
-    if has_lessons:
-        lesson_ok = mastery.lesson_viewed_at is not None and (
-            mastery.review_triggered_at is None
-            or mastery.lesson_viewed_at >= mastery.review_triggered_at
-        )
-    else:
-        lesson_ok = True
-
-    return {
-        "lesson_required": has_lessons,
-        "lesson_completed": lesson_ok,
-        "correct_required": CONSECUTIVE_CORRECT_TO_CLEAR,
-        "correct_done": min(mastery.consecutive_correct, CONSECUTIVE_CORRECT_TO_CLEAR),
-        "consecutive_wrong": mastery.consecutive_wrong,
-        "recent_accuracy": round(mastery.recent_accuracy, 3),
-    }
-
-
-def mark_review_lesson_viewed(
-    db: Session,
-    user_id: int,
-    topic_id: int,
-) -> TopicMasteryResponse:
-    """
-    B3: user đã xem bài giảng của topic → cập nhật lesson_viewed_at.
-
-    Đây là bước đầu tiên trong điều kiện thoát `review_required`.
-    Bước còn lại: làm đúng CONSECUTIVE_CORRECT_TO_CLEAR câu liên tiếp.
-    """
-    from app.learning.schemas import TopicMasteryResponse
-
-    mark_lesson_viewed(db, user_id, topic_id)
-    db.commit()
-
-    mastery = get_or_create_mastery(db, user_id, topic_id)
-    topic = db.query(Topic).filter(Topic.id == topic_id).first()
-    if topic is None:
-        raise LookupError("Topic not found")
-
-    return TopicMasteryResponse(
-        topic_id=topic.id,
-        topic_name=topic.name,
-        mastery=mastery.mastery,
-        current_level=mastery.current_level,
-        practice_attempts=mastery.practice_attempts,
-        status=mastery.status,
-        correct_count=mastery.correct_count,
-        wrong_count=mastery.wrong_count,
-        consecutive_correct=mastery.consecutive_correct,
-        consecutive_wrong=mastery.consecutive_wrong,
-        recent_accuracy=round(mastery.recent_accuracy, 3),
-        review_progress=_build_review_progress(db, user_id, topic_id, mastery),
-    )
 
 
 def get_topic_mastery_status(db: Session, user_id: int, topic_id: int) -> TopicMasteryResponse:
@@ -456,8 +475,7 @@ def get_topic_mastery_status(db: Session, user_id: int, topic_id: int) -> TopicM
         wrong_count=mastery.wrong_count,
         consecutive_correct=mastery.consecutive_correct,
         consecutive_wrong=mastery.consecutive_wrong,
-        recent_accuracy=round(mastery.recent_accuracy, 3),
-        review_progress=_build_review_progress(db, user_id, topic_id, mastery),
+        passed=mastery.status == "completed",
     )
 
 

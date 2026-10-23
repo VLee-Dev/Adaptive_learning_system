@@ -6,51 +6,9 @@ from app.questions.model import Question, QuestionPurpose
 from app.questions.stat_model import QuestionStat
 
 
-def get_practice_questions_by_level(
-    db: Session,
-    topic_id: int,
-    level: int,
-    exclude_question_ids: list[int] | None = None
-) -> list[Question]:
-    """
-    Get practice questions for a topic at a specific level.
-
-    Args:
-        db: Database session
-        topic_id: Topic ID
-        level: Question level (1, 2, or 3)
-        exclude_question_ids: List of question IDs to exclude
-
-    Returns:
-        List of questions
-    """
-    query = db.query(Question).filter(
-        and_(
-            Question.topic_id == topic_id,
-            Question.purpose == QuestionPurpose.PRACTICE,
-            Question.level == level
-        )
-    )
-
-    if exclude_question_ids:
-        query = query.filter(Question.id.notin_(exclude_question_ids))
-
-    return query.all()
-
-
 def get_question_by_id(db: Session, question_id: int) -> Question | None:
     """Get a question by ID."""
     return db.query(Question).filter(Question.id == question_id).first()
-
-
-def get_questions_by_topic(db: Session, topic_id: int, purpose: QuestionPurpose | None = None) -> list[Question]:
-    """Get all questions for a topic, optionally filtered by purpose."""
-    query = db.query(Question).filter(Question.topic_id == topic_id)
-
-    if purpose:
-        query = query.filter(Question.purpose == purpose)
-
-    return query.all()
 
 
 # ===== C2: adaptive selection support =====
@@ -97,14 +55,20 @@ def upsert_question_stat(
     user_id: int,
     question_id: int,
     is_correct: bool,
-    created_at=None,
 ) -> QuestionStat:
     """
     Cập nhật thống kê theo câu sau mỗi lượt trả lời (C2).
 
     Dùng get-or-create + update thay vì upsert để giữ logic đơn giản và
     tương thích với mọi backend (không phụ thuộc ON CONFLICT).
+
+    Ngoài `attempts`/`wrong` (thống kê lũy kếa để hiển thị), hàm này duy trì
+    `weakness` — điểm yếu hiện hành dùng để CHỌN câu. `weakness` tăng khi sai
+    và suy giảm khi đúng, nên bằng chứng cũ tự mờ đi thay vì đè vĩnh viễn
+    (xem `app/questions/stat_model.py`).
     """
+    from app.questions.stat_model import WEAKNESS_DECAY, WEAKNESS_INCREMENT
+
     stat = (
         db.query(QuestionStat)
         .filter(
@@ -114,12 +78,25 @@ def upsert_question_stat(
         .first()
     )
     if stat is None:
-        stat = QuestionStat(user_id=user_id, question_id=question_id, attempts=0, wrong=0)
+        # `weakness=0.0` phải set TƯỜNG MINH: default của cột chỉ được SQLAlchemy
+        # gán lúc INSERT, nên đọc `stat.weakness` ngay sau `db.add()` sẽ là None
+        # → `None + (1 - None) * 0.45` → TypeError → 500. Lỗi này chỉ xảy ra ở
+        # LẦN ĐẦU user làm một câu (tạo stat mới), nên rất dễ lọt.
+        stat = QuestionStat(
+            user_id=user_id,
+            question_id=question_id,
+            attempts=0,
+            wrong=0,
+            weakness=0.0,
+        )
         db.add(stat)
 
     stat.attempts += 1
-    if not is_correct:
+    if is_correct:
+        # Đúng → bằng chứng cũ mờ đi, nhưng không xoá hẳn (vẫn là "chỗ dễ sai").
+        stat.weakness = max(0.0, stat.weakness * WEAKNESS_DECAY)
+    else:
         stat.wrong += 1
-        stat.last_wrong_at = created_at
+        stat.weakness = stat.weakness + (1.0 - stat.weakness) * WEAKNESS_INCREMENT
 
     return stat

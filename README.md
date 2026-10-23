@@ -350,7 +350,10 @@ Guest xem Course
 - BKT tính riêng theo `(user_id, topic_id)`.
 - Kết quả tốt có thể đưa Student lên level cao hơn; kết quả kém có thể hạ level.
 - Ngưỡng mặc định đã thống nhất: `0.65` là khá vững, `0.85` là nắm vững; Admin có thể cấu hình theo Topic.
-- Khi cần ôn lại, hệ thống ghi log `review_required`; Student có thể làm lại theo giới hạn Admin đặt.
+- Level là hàm thuần của mastery: `>= 0.70` → 3, `< 0.35` → 1, còn lại → 2 (bắt đầu luôn là 2).
+- Sai 5 câu liên tiếp (hoặc 3 câu liên tiếp khi BKT `< 0.30`) → hiện thông báo "Bạn hãy học kỹ hơn chủ đề này" kèm link bài giảng. Đây là *cảnh báo*, không phải trạng thái — người học vẫn làm tiếp được.
+- Pass khi thỏa một trong hai: (5 câu đúng liên tiếp **VÀ** BKT `>= 0.85`) **HOẶC** (đủ 20 câu **VÀ** đúng `>= 10`).
+- Đã pass rồi mà bấm luyện lại → không tính BKT, chỉ ghi thống kê số câu đúng/sai và từng câu.
 - Chapter Final Test random câu theo từng slot/pool, không gom toàn bộ câu của Chapter thành một pool chung.
 
 ### Phạm vi chưa có

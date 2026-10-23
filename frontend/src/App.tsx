@@ -117,9 +117,9 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* B3/C2: route bài học độc lập — dùng cho "xem lại bài giảng" khi
-            đang ở trạng thái review_required. Trước đây route này bị gỡ
-            ở commit aab09e1 nhưng link vẫn còn → 404. */}
+        {/* Route bài học độc lập — dùng cho "xem lại bài giảng" khi được nhắc
+            học kỹ hơn. Trước đây route này bị gỡ ở commit aab09e1 nhưng link
+            vẫn còn → 404. */}
         <Route
           path="/student/lessons/:lessonId"
           element={

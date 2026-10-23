@@ -9,6 +9,7 @@ from app.learning.schemas import (
     AnswerSubmitResponse,
     HeartbeatStudySessionRequest,
     MonthlyStreakResponse,
+    PracticeNextResponse,
     QuestionResponse,
     StartStudySessionRequest,
     StartStudySessionResponse,
@@ -23,13 +24,11 @@ from app.learning.chapter_test_schemas import (
 )
 from app.learning.service import (
     get_monthly_streak,
-    get_next_practice_question,
     get_topic_mastery_status,
     submit_practice_answer,
-    mark_review_lesson_viewed,
     select_next_question,
 )
-from app.mastery.service import get_or_create_mastery
+from app.mastery.service import MAX_QUESTIONS_PER_TOPIC, get_or_create_mastery
 from app.learning.chapter_test_service import (
     start_chapter_test,
     submit_chapter_test,
@@ -89,15 +88,58 @@ def get_mastery(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
-@router.get("/topics/{topic_id}/practice/next", response_model=QuestionResponse)
+@router.get("/topics/{topic_id}/practice/next", response_model=PracticeNextResponse)
 def get_practice_question(
     topic_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get next practice question for a topic."""
+    """Get next practice question for a topic.
+
+    Trả 200 với `question: null` + `note` khi không còn câu phù hợp. Trước đây
+    trả 404, nhưng "hết câu phù hợp" là trạng thái bình thường (đã ôn xong chủ
+    đề) — FE gặp 404 sẽ hiện màn lỗi "Chưa có câu hỏi", sai ngữ nghĩa.
+
+    Nếu topic đã pass → trả `is_extra_practice = true`: câu hỏi vẫn được chọn
+    (để ôn thêm) nhưng KHÔNG tính BKT.
+    """
     try:
         mastery = get_or_create_mastery(db, current_user.id, topic_id)
+        passed = mastery.status == "completed"
+        attempts_used = mastery.practice_attempts
+
+        # Đã pass → vẫn cho luyện lại (chỉ ghi thống kê, không tính BKT).
+        if passed:
+            selection = select_next_question(
+                db,
+                current_user.id,
+                topic_id,
+                current_level=mastery.current_level,
+                status=mastery.status,
+            )
+            return PracticeNextResponse(
+                question=selection.question,
+                note=selection.note,
+                passed=True,
+                is_extra_practice=True,
+                attempts_used=attempts_used,
+                attempts_limit=MAX_QUESTIONS_PER_TOPIC,
+            )
+
+        # Chưa pass nhưng đã đủ 20 câu → dừng lượt thi.
+        if attempts_used >= MAX_QUESTIONS_PER_TOPIC:
+            return PracticeNextResponse(
+                question=None,
+                note=(
+                    f"Bạn đã làm đủ {MAX_QUESTIONS_PER_TOPIC} câu. "
+                    "Hãy xem lại kết quả rồi quay lại nếu muốn ôn thêm."
+                ),
+                passed=False,
+                is_extra_practice=False,
+                attempts_used=attempts_used,
+                attempts_limit=MAX_QUESTIONS_PER_TOPIC,
+            )
+
         selection = select_next_question(
             db,
             current_user.id,
@@ -105,14 +147,14 @@ def get_practice_question(
             current_level=mastery.current_level,
             status=mastery.status,
         )
-        if selection.question is None:
-            # Không còn câu phù hợp → trả 404 kèm lý do cụ thể để FE hiển thị
-            # đúng (thay vì thông báo chung chung).
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=selection.note or "No practice questions available for this topic",
-            )
-        return selection.question
+        return PracticeNextResponse(
+            question=selection.question,
+            note=selection.note,
+            passed=False,
+            is_extra_practice=False,
+            attempts_used=attempts_used,
+            attempts_limit=MAX_QUESTIONS_PER_TOPIC,
+        )
     except LookupError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
@@ -137,24 +179,6 @@ def submit_answer(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
-
-
-@router.post("/topics/{topic_id}/review/lesson-viewed", response_model=TopicMasteryResponse)
-def mark_lesson_viewed(
-    topic_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """B3: đánh dấu user đã xem bài giảng của topic (bước đầu vòng lặp ôn lại).
-
-    Sau khi gọi endpoint này, nếu user làm đúng đủ
-    CONSECUTIVE_CORRECT_TO_CLEAR câu liên tiếp thì thoát trạng thái
-    review_required.
-    """
-    try:
-        return mark_review_lesson_viewed(db, current_user.id, topic_id)
-    except LookupError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
 @router.post("/chapters/{chapter_id}/test/start", response_model=ChapterTestStartResponse)

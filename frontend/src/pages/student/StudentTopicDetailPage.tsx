@@ -27,21 +27,14 @@ interface TopicMastery {
   topic_id: number
   mastery: number
   current_level: number
-  status: 'in_progress' | 'completed' | 'review_required'
-  // A2: bằng chứng quan sát được
+  status: 'in_progress' | 'completed'
+  // Bằng chứng quan sát được
   correct_count?: number
   wrong_count?: number
   consecutive_correct?: number
   consecutive_wrong?: number
-  recent_accuracy?: number
-  review_progress?: {
-    lesson_required: boolean
-    lesson_completed: boolean
-    correct_required: number
-    correct_done: number
-    consecutive_wrong: number
-    recent_accuracy: number
-  }
+  /** Topic đã đạt yêu cầu pass chưa? */
+  passed?: boolean
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -122,11 +115,6 @@ export default function StudentTopicDetailPage() {
               {mastery.status === 'completed' && (
                 <div className="mt-2 text-xs text-green-700 font-semibold">
                   ✓ Bạn đã hoàn thành chủ đề này
-                </div>
-              )}
-              {mastery.status === 'review_required' && (
-                <div className="mt-2 text-xs text-red-700 font-semibold">
-                  ⚠️ Nên ôn lại bài học trước khi luyện tập tiếp
                 </div>
               )}
             </div>
