@@ -140,14 +140,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/student/chapters/:chapterId"
-          element={
-            <ProtectedRoute requiredRole="student">
-              <StudentChapterDetailPage />
-            </ProtectedRoute>
-          }
-        />
 
         <Route
           path="/student/profile"
