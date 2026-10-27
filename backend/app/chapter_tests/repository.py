@@ -56,13 +56,3 @@ def generate_test_questions(db: Session, test: ChapterFinalTest) -> dict[int, Qu
                     used_question_ids_per_pool.setdefault(pool.id, set()).add(selected_question.id)
 
     return slot_questions
-
-
-def get_test_by_id(db: Session, test_id: int) -> ChapterFinalTest | None:
-    """Get test by ID with all relations."""
-    return db.query(ChapterFinalTest).filter(
-        ChapterFinalTest.id == test_id
-    ).options(
-        joinedload(ChapterFinalTest.slots).joinedload(ChapterTestSlot.pools),
-        joinedload(ChapterFinalTest.pools).joinedload(ChapterTestPool.questions)
-    ).first()

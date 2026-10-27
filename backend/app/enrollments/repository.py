@@ -6,7 +6,6 @@ from app.chapters.model import Chapter
 from app.completions.model import ChapterCompletion, CourseCompletion
 from app.courses.model import Course
 from app.enrollments.model import CourseEnrollment
-from app.learning_events.model import LearningEvent
 from app.study_sessions.model import StudySession
 from app.topics.model import Topic
 
@@ -37,8 +36,7 @@ def list_enrollments_for_user(db: Session, user_id: int) -> list[dict]:
     - course_id, course_name: from courses
     - progress: % chapter completed in that course (0–100)
     - completed: course_completions record exists
-    - last_accessed: created_at của LearningEvent mới nhất trong topics của course
-                     (dựa trên topic_id qua chapter), null nếu chưa có event
+    - last_accessed: thời điểm tương tác mới nhất từ attempts hoặc study_sessions
     """
     enrollments = db.scalars(
         select(CourseEnrollment)
@@ -75,20 +73,12 @@ def list_enrollments_for_user(db: Session, user_id: int) -> list[dict]:
         ) is not None
 
         # Last accessed: mốc thời gian user tương tác gần nhất với course.
-        # Lấy max trên 3 nguồn vì mỗi nguồn có thể rỗng tùy cách user học:
-        #   1. learning_events  — event học tập (answer / remedial / ai_explanation)
-        #   2. attempts         — user trả lời câu hỏi
-        #   3. study_sessions   — mở trang practice / chapter-test
+        # Lấy max từ attempts và study_sessions vì đây là hai nguồn hoạt động
+        # thực tế còn được ghi trong hệ thống.
         topic_ids_in_course = select(Topic.id).where(Topic.chapter_id.in_(
             select(Chapter.id).where(Chapter.course_id == course.id)
         ))
 
-        last_event = db.scalar(
-            select(func.max(LearningEvent.created_at)).where(
-                LearningEvent.user_id == user_id,
-                LearningEvent.topic_id.in_(topic_ids_in_course),
-            )
-        )
         last_attempt = db.scalar(
             select(func.max(Attempt.created_at)).where(
                 Attempt.user_id == user_id,
@@ -104,7 +94,7 @@ def list_enrollments_for_user(db: Session, user_id: int) -> list[dict]:
             )
         )
 
-        candidates = [t for t in (last_event, last_attempt, last_session) if t is not None]
+        candidates = [t for t in (last_attempt, last_session) if t is not None]
         last_accessed = max(candidates) if candidates else None
 
         results.append({

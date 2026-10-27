@@ -7,7 +7,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from core.database import Base, utcnow
 
 if TYPE_CHECKING:
-    from app.learning_events.model import LearningEvent
     from app.questions.model import Question
     from app.topics.model import Topic
     from app.users.model import User
@@ -27,4 +26,3 @@ class Attempt(Base):
     user: Mapped["User"] = relationship(back_populates="attempts")
     question: Mapped["Question"] = relationship(back_populates="attempts", foreign_keys=[question_id])
     topic: Mapped["Topic"] = relationship()
-    learning_events: Mapped[list["LearningEvent"]] = relationship(back_populates="attempt", cascade="all, delete-orphan")

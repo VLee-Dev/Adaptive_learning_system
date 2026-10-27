@@ -112,12 +112,3 @@ def auto_abandon_stale(db: Session, user_id: int) -> int:
         s.duration_seconds = max(s.duration_seconds, min(elapsed, ABANDON_AFTER_SECONDS))
     db.commit()
     return len(stale)
-
-
-def get_open_sessions(db: Session, user_id: int) -> list[StudySession]:
-    """Lấy các session chưa ended (debug, không dùng production)."""
-    return (
-        db.query(StudySession)
-        .filter(StudySession.user_id == user_id, StudySession.ended_at.is_(None))
-        .all()
-    )

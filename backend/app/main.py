@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 
 # IMPORTANT: import model_registry FIRST so all model classes are declared
 # before any router triggers mapper configuration. SQLAlchemy needs every
-# class referenced in a relationship (e.g. User -> LearningEvent) to be
+# class referenced in a relationship (e.g. User -> TopicMastery) to be
 # present in the class registry when the mapper is initialized.
 from app import model_registry  # noqa: F401
 

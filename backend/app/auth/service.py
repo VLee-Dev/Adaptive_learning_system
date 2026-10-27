@@ -5,17 +5,13 @@ B44: Tách logic User (create, update profile, hash password) sang
 """
 from datetime import datetime, timedelta, timezone
 
-import bcrypt
 from jose import jwt
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.users.model import User
-from app.users.service import hash_password as _hash, verify_password
-
-# Re-export để giữ backward-compat với code đã import từ app.auth.service
-hash_password = _hash
+from app.users.service import verify_password
 
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_MINUTES = 60

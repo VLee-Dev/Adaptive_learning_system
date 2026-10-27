@@ -10,7 +10,6 @@ from core.database import Base, utcnow
 if TYPE_CHECKING:
     from app.attempts.model import Attempt
     from app.chapter_tests.model import ChapterTestPool
-    from app.recommendations.model import Recommendation
     from app.stimuli.model import Stimulus
     from app.topics.model import Topic
     from app.questions.stat_model import QuestionStat
@@ -52,5 +51,4 @@ class Question(Base):
     attempts: Mapped[list["Attempt"]] = relationship(back_populates="question", foreign_keys="Attempt.question_id")
     source_attempt: Mapped["Attempt | None"] = relationship(foreign_keys=[source_attempt_id], post_update=True)
     stats: Mapped[list["QuestionStat"]] = relationship(back_populates="question", cascade="all, delete-orphan")
-    recommendations: Mapped[list["Recommendation"]] = relationship(back_populates="recommended_question")
     chapter_test_pools: Mapped[list["ChapterTestPool"]] = relationship(secondary="chapter_test_pool_questions", back_populates="questions")

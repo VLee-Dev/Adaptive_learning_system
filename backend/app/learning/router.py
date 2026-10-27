@@ -55,7 +55,7 @@ def list_enrollments(
         "course_name": str,
         "progress": float,        # 0–100, % chapter completed
         "completed": bool,        # course_completions record exists
-        "last_accessed": str|null # ISO 8601 UTC, từ LearningEvent mới nhất
+        "last_accessed": str|null # ISO 8601 UTC, từ hoạt động học gần nhất
       },
       ...
     ]

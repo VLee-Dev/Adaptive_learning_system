@@ -67,13 +67,11 @@ Adaptive_learning_system/
 │   │   ├── study_sessions/      # Ghi thời gian học
 │   │   ├── completions/         # Log hoàn thành chương / khóa học
 │   │   ├── chapter_tests/       # Bài kiểm tra cuối chương + pool/slot
-│   │   ├── learning_events/     # Nhật ký sự kiện học tập
-│   │   ├── recommendations/     # Nhật ký lý do chọn câu (audit)
 │   │   ├── courses/ chapters/ topics/ lessons/ stimuli/   # Model dữ liệu
-│   │   └── users/               # Người dùng & vai trò
+│   │   └── users/               # User model và profile business logic
 │   │
 │   ├── core/database.py         # Engine, Session, Base, dependency get_db
-│   ├── alembic/versions/        # 13 migration, head = e5a1b2c3d4f6
+│   ├── alembic/versions/        # Migration, head = f2a3b4c5d6e7
 │   ├── scripts/                 # Script seed dữ liệu mẫu
 │   ├── static/uploads/          # Ảnh do Admin tải lên
 │   └── requirements.txt
@@ -145,9 +143,9 @@ Course ─┬─ Chapter ─┬─ Topic ─┬─ Lesson
         └─ CourseEnrollment ─ CourseCompletion
 ```
 
-Các bảng theo dõi tiến trình: `attempts` (lịch sử trả lời), `study_sessions` (thời gian học), `learning_events` (nhật ký sự kiện), `recommendations` (lý do chọn câu).
+Các bảng theo dõi tiến trình: `attempts` (lịch sử trả lời), `study_sessions` (thời gian học), `topic_mastery` (trạng thái BKT), `question_stats` (điểm yếu từng câu).
 
-Tổng cộng **22 bảng** (21 bảng ứng dụng + `alembic_version`).
+Tổng cộng **20 bảng** (19 bảng ứng dụng + `alembic_version`).
 
 ---
 
@@ -218,7 +216,7 @@ Các script này **idempotent** — chạy lại không tạo trùng dữ liệu
 
 **Đã hoàn thiện**
 
-- Database 22 bảng, migration head `e5a1b2c3d4f6`
+- Database 20 bảng, migration head `f2a3b4c5d6e7`
 - Xác thực JWT + phân quyền theo vai trò
 - **52 API endpoint** (Auth 4 · Content 8 · Enrollment 2 · Learning 11 · Admin 26 · Uploads 1)
 - Thuật toán BKT với cấu hình theo từng chủ đề
@@ -230,7 +228,6 @@ Các script này **idempotent** — chạy lại không tạo trùng dữ liệu
 **Chưa có**
 
 - Unit test & test tích hợp (`backend/tests/` hiện rỗng)
-- Recommendation engine (mới chỉ có bảng audit)
 - Hạ tầng production (Redis cho phiên thi, logging, monitoring, CI/CD)
 
 ---

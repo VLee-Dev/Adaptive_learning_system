@@ -1,7 +1,6 @@
 """Seed data for testing the adaptive learning system."""
 from sqlalchemy.orm import Session
 
-from app.auth.service import hash_password
 from app.courses.model import Course
 from app.chapters.model import Chapter
 from app.topics.model import Topic, TopicType
@@ -9,32 +8,7 @@ from app.lessons.model import Lesson
 from app.questions.model import Question, QuestionPurpose, QuestionFormat
 # NOTE: PracticeConfiguration đã xoá (B1+B8). BKT thresholds hardcode trong service.
 from app.chapter_tests.model import ChapterFinalTest, ChapterTestPool, ChapterTestSlot
-from app.users.model import User, UserRole
 from core.database import SessionLocal
-
-
-def seed_admin_account(db: Session):
-    """
-    DEPRECATED: Admin account is now auto-created by migration.
-    This function kept for backward compatibility.
-    """
-    existing_admin = db.query(User).filter(User.email == "admin@adaptive.com").first()
-    if existing_admin:
-        print("ℹ️  Admin account already exists (created by migration)")
-        return existing_admin
-
-    # Fallback: create if somehow migration was skipped
-    print("⚠️  Creating admin account (migration may have been skipped)")
-    admin = User(
-        email="admin@adaptive.com",
-        hashed_password=hash_password("Admin@123"),
-        role=UserRole.ADMIN,
-        full_name="System Administrator"
-    )
-    db.add(admin)
-    db.commit()
-    db.refresh(admin)
-    return admin
 
 
 def seed_sample_course(db: Session):
@@ -447,7 +421,7 @@ def main():
         print("\n📝 Quick Start:")
         print("   1. Admin Login: admin@adaptive.com / Admin@123")
         print("   2. Student Register: Use /auth/register endpoint")
-        print("   3. Test APIs: See API_DOCUMENTATION.md")
+        print("   3. Test APIs: See README.md or http://localhost:8000/docs")
         print("\n⚠️  IMPORTANT: Change admin password in production!")
     except Exception as e:
         print(f"❌ Error seeding database: {e}")
